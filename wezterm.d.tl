@@ -37,6 +37,38 @@ local record ColorScheme
   indexed: {integer:string}
   selection_bg: string
   selection_fg: string
+
+  record TabBar
+    background: string
+
+    record Tab
+      enum Intensity
+        "Half"
+        "Normal"
+        "Bold"
+      end
+
+      enum Underline
+        "None"
+        "Single"
+        "Double"
+      end
+
+      bg_color: string
+      fg_color: string
+      intensity: Intensity
+      underline: Underline
+      italic: boolean
+      strikethrough: boolean
+    end
+
+    active_tab: Tab
+    inactive_tab: Tab
+    inactive_tab_hover: Tab
+    new_tab: Tab
+    new_tab_hover: Tab
+  end
+  tab_bar: TabBar
 end
 
 local record ColorSchemeMetadata
@@ -50,13 +82,18 @@ local record DaemonOptions
   pid_file: string
 end
 
-local enum DefaultCursorStyle
+local enum CursorStyle
   "SteadyBlock"
   "BlinkingBlock"
   "SteadyUnderline"
   "BlinkingUnderline"
   "SteadyBar"
   "BlinkingBar"
+end
+
+local enum CursorVisibility
+  "Visible"
+  "Hidden"
 end
 
 local enum EasingFunction
@@ -149,6 +186,32 @@ local record Leader
   timeout_milliseconds: number
 end
 
+local record LocalProcessInfo
+  argv: {string}
+  children: {integer:LocalProcessInfo}
+  cwd: string
+  executable: string
+  name: string
+  pid: integer
+  ppid: integer
+  start_time: integer
+  enum LocalProcessInfoStatus
+    "Idle"
+    "Run"
+    "Sleep"
+    "Stop"
+    "Zombie"
+    "Tracing"
+    "Dead"
+    "Wakekill"
+    "Waking"
+    "Parked"
+    "LockBlocked"
+    "Unknown"
+  end
+  status: LocalProcessInfoStatus
+end
+
 local enum Orientation
   "Horizontal"
   "Vertical"
@@ -165,6 +228,18 @@ end
 local enum SSHBackend
   "Ssh2"
   "LibSsh"
+end
+
+local enum SplitDirection
+  "Right"
+  "Left"
+  "Top"
+  "Bottom"
+end
+
+local record SizeT
+  Percent: integer | nil
+  Cells: integer | nil
 end
 
 local record TabBarStyle
@@ -310,7 +385,7 @@ local record FontOptionsTable
   freetype_load_flags: string | nil
 end
 
-local type FontOptions = FontOptionsTable | string
+local type FontOptions = FontOptionsTable | {string, FontOptionsTable} | string
 
 -- the type returned from `wezterm.font` & `wezterm.font_with_fallback`
 local record FontOptionsInfo
@@ -411,24 +486,231 @@ local record SSHDomain
   local_echo_threshold_ms: integer | nil
 end
 
+local record Time
+  format: function(format: string): string
+  format_utc: function(format: string): string
+  record SunTimes
+    progression: number
+    rise: string
+    set: string
+    up: boolean
+  end
+  sun_times: function(lat: number, lon: number): SunTimes
+end
+
 local record wezterm
   record Action
     record ActivateKeyTableT
       name: string
-      timeout_milliseconds: integer
-      one_shot: boolean
+      timeout_milliseconds: integer | nil
+      one_shot: boolean | nil
+      replace_current: boolean | nil
+      until_unknown: boolean | nil
+      prevent_fallback: boolean | nil
     end
 
-    record SpawnCommandInNewWindowT
-      label: string
-      args: {string}
-      cwd: string
-      set_environment_variables: {string:string}
-      domain: any
+    enum CopyToDestination
+      "Clipboard"
+      "PrimarySelection"
+      "ClipboardAndPrimarySelection"
     end
 
-    ActivateKeyTable: ActivateKeyTableT
-    SpawnCommandInNewWindow: SpawnCommandInNewWindowT
+    enum CharacterGroup
+      "RecentlyUsed"
+      "SmileysAndEmotion"
+      "PeopleAndBody"
+      "AnimalsAndNature"
+      "FoodAndDrink"
+      "TravelAndPlaces"
+      "Activities"
+      "Objects"
+      "Symbols"
+      "Flags"
+      "NerdFonts"
+      "UnicodeNames"
+    end
+
+    record CharSelectT
+      copy_on_select: boolean | nil
+      copy_to: CopyToDestination | nil
+      group: CharacterGroup | nil
+    end
+
+    enum ClearScrollBackE
+      "ScrollbackOnly"
+      "ScrollbackAndViewport"
+    end
+
+    enum ActivatePaneDirectionE
+      "Left"
+      "Right"
+      "Up"
+      "Down"
+      "Next"
+      "Prev"
+    end
+
+    enum DetachDomainE
+      "CurrentPaneDomain"
+    end
+
+    enum ExtendSelectionToMouseCursorT
+      "Cell"
+      "Line"
+      "Word"
+    end
+
+    enum PaneSelectModeE
+      "Active"
+      "SwapWithActive"
+    end
+
+    record PaneSelectT
+      mode: PaneSelectModeE
+      alphabet: string
+    end
+
+    enum PasteFromSource
+      "Clipboard"
+      "PrimarySelection"
+    end
+
+    enum RotateDirection
+      "Clockwise"
+      "CounterClockwise"
+    end
+
+    record SearchT
+      Regex: string
+      CaseSensitiveString: string
+      CaseInsensitiveString: string
+    end
+
+    enum SelectTextAtMouseCursorE
+      "Cell"
+      "Line"
+      "Word"
+      "SemanticZone"
+    end
+
+    record SendKeyE
+      key: string
+      mods: string
+    end
+
+    record SpawnCommandT
+      label: string | nil
+      args: {string} | nil
+      cwd: string | nil
+      set_environment_variables: {string:string} | nil
+      domain: any | nil
+    end
+
+    record ShowLauncherArgsT
+      flags: string
+      title: string | nil
+    end
+
+    record SplitPaneT
+      direction: SplitDirection
+      size: SizeT | nil
+      command: SpawnCommandT | nil
+      top_level: boolean | nil
+    end
+
+    record SwitchToWorkspaceT
+      name: string
+      spawn: SpawnCommandT | nil
+    end
+
+    record QuickSelectArgsT
+      pattern: {string} | nil
+      alphabet: string | nil
+      action: Action | nil
+      label: string | nil
+      scope_lines: number | nil
+    end
+
+    ActivateCopyMode: function(): nil
+    ActivateKeyTable: function(args: ActivateKeyTableT): nil
+    ActivateLastTab: function(): nil
+    ActivatePaneByIndex: function(index: integer): nil
+    ActivatePaneDirection: function(direction: ActivatePaneDirectionE): nil
+    ActivateTab: function(index: integer): nil
+    ActivateTabRelative: function(offset: integer): nil
+    ActivateTabRelativeNoWrap: function(offset: integer): nil
+    AdjustPaneSize: function({SplitDirection, integer}): nil
+    AttachDomain: function(domain_name: string): nil
+    CharSelect: function(args: CharSelectT | nil): nil
+    ClearKeyTableStack: function(): nil
+    ClearScrollback: function(args: ClearScrollBackE | nil): nil
+    ClearSelection: function(): nil
+    record CloseT
+      confirm: boolean
+    end
+    CloseCurrentPane: function(args: CloseT | nil): nil
+    CloseCurrentTab: function(args: CloseT | nil): nil
+    CompleteSelection: function(args: CopyToDestination): nil
+    CompleteSelectionOrOpenLinkAtMouseCursor: function(args: CopyToDestination): nil
+    Copy: function(): nil -- DEPRECATED
+    CopyTo: function(destination: CopyToDestination): nil
+    DecreaseFontSize: function(): nil
+    record DetachDomainT
+      DomainName: string
+    end
+    DetachDomain: function(DetachDomainE | DetachDomainT): nil
+    DisableDefaultAssignment: function(): nil
+    EmitEvent: function(event: string): nil
+    ExtendSelectionToMouseCursor: function(args: ExtendSelectionToMouseCursorT): nil
+    Hide: function(): nil
+    HideApplication: function(): nil
+    IncreaseFontSize: function(): nil
+    MoveTab: function(index: integer): nil
+    MoveTabRelative: function(offset: integer): nil
+    Multiple: function({Action}): nil
+    Nop: function(): nil
+    OpenLinkAtMouseCursor: function(): nil
+    PaneSelect: function(PaneSelectT): nil
+    Paste: function(): nil -- DEPRECATED
+    PasteFrom: function(source: PasteFromSource): nil
+    -- PastePrimarySelection: function(args: any): any
+    PopKeyTable: function(): nil
+    QuickSelect: function(): nil
+    QuickSelectArgs: function(args: QuickSelectArgsT | nil)
+    QuitApplication: function(): nil
+    ReloadConfiguration: function(): nil
+    ResetFontAndWindowSize: function(): nil
+    ResetFontSize: function(): nil
+    ResetTerminal: function(): nil
+    RotatePanes: function(direction: RotateDirection): nil
+    ScrollByCurrentEventWheelDelta: function(): nil
+    ScrollByLine: function(amount: integer): nil
+    ScrollByPage: function(amount: integer): nil
+    ScrollToBottom: function(): nil
+    ScrollToPrompt: function(zone: integer): nil
+    ScrollToTop: function(): nil
+    Search: function(args: SearchT): nil
+    SelectTextAtMouseCursor: function(args: SelectTextAtMouseCursorE): nil
+    SendKey: function(args: SendKeyE): nil
+    SendString: function(str: string): nil
+    SetPaneZoomState: function(state: boolean): nil
+    Show: function(): nil
+    ShowDebugOverlay: function(): nil
+    ShowLauncher: function(): nil
+    ShowLauncherArgs: function(args: ShowLauncherArgsT): nil
+    ShowTabNavigator: function(): nil
+    SpawnCommandInNewTab: function(args: SpawnCommandT): nil
+    SpawnCommandInNewWindow: function(args: SpawnCommandT): nil
+    SpawnTab: function(domain: string | nil): nil
+    SpawnWindow: function(): nil
+    SplitHorizontal: function(args: SpawnCommandT): nil
+    SplitPane: function(args: SplitPaneT): nil
+    SplitVertical: function(args: SpawnCommandT): nil
+    StartWindowDrag: function(): nil
+    SwitchToWorkspace: function(args: SwitchToWorkspaceT): nil
+    SwitchWorkspaceRelative: function(offset: integer): nil
+    ToggleFullScreen: function(): nil
+    TogglePaneZoomState: function(): nil
   end
 
   record BatteryInfo
@@ -474,7 +756,7 @@ local record wezterm
   log_info: function(...: any): nil
   log_warn: function(...: any): nil
   nerdfonts: {WeztermNF:string}
-  on: function(event_name: string, callback: function(...: any): any): nil
+  on: function(event_name: string, callback: function(...: any)): nil
   open_with: function(path_or_url: string, application: string | nil): any
   pad_left: function(string: string, min_width: integer): string
   pad_right: function(string: string, min_width: integer): string
@@ -510,7 +792,7 @@ local record wezterm
     extract_colors_from_image: function(path: string, params: ExtractParams): {string}
     -- TODO: https://wezfurlong.org/wezterm/config/lua/color/index.html
     from_hsla: function(h: number, s: number, l: number, a: number): any
-    get_builtin_schemes: function(): {string:any}
+    get_builtin_schemes: function(): {string:ColorScheme}
     get_default_colors: function(): {string:string}
     gradient: function(gradient: WindowBackgroundGradient, num_colors: integer): {string}
     load_base16_scheme: function(filename: string): {ColorScheme, ColorSchemeMetadata}
@@ -555,67 +837,124 @@ local record wezterm
   gui: GUI
 
   record WeztermMux
-    all_windows: function(): {any} -- TODO: once MuxWindow is typed
+    record Pane
+      get_current_working_dir: function(): string
+      record PaneCursorPosition
+        x: integer
+        y: integer
+        shape: CursorStyle
+        visibility: CursorVisibility
+      end
+      get_cursor_position: function(): PaneCursorPosition
+      record PaneDimensions
+        cols: integer
+        viewport_rows: integer
+        scrollback_rows: integer
+        physical_top: integer
+        scrollback_top: integer
+      end
+      get_dimensions: function(): PaneDimensions
+      get_domain_name: function(): string
+      get_foreground_process_info: function(): LocalProcessInfo
+      get_foreground_process_name: function(): string
+      get_lines_as_text: function(nlines: integer | nil): {string}
+      get_logical_lines_as_text: function(nlines: integer | nil): {string}
+      record PaneMetadata
+        password_input: boolean
+        is_tardy: boolean
+        since_last_response_ms: integer
+      end
+      get_metadata: function(): PaneMetadata
+      get_title: function(): string
+      get_user_vars: function(): {string:string}
+      has_unseen_output: function(): boolean
+      inject_output: function(text: string): nil
+      is_alt_screen_active: function(): boolean
+      mux_pane: function(): Pane
+      pane_id: function(): integer
+      paste: function(text: string): nil
+      send_paste: function(text: string): nil
+      send_text: function(text: string): nil
+      record PaneSplitArgs
+        args: {string} | nil
+        cwd: string | nil
+        set_environment_variables: {string:string} | nil
+        domain: any | nil -- TODO: https://wezfurlong.org/wezterm/config/lua/wezterm/mux/pane.html#split
+        direction: SplitDirection | nil
+        top_level: boolean | nil
+        size: number
+      end
+      split: function(args: PaneSplitArgs): Pane
+      tab: function(): MuxTab
+      window: function(): MuxWindow
+    end
+    record MuxTab
+      get_title: function(): string
+      panes: function(): {Pane}
+      record PaneInfo
+        index: integer
+        is_active: boolean
+        is_zoomed: boolean
+        left: integer
+        top: integer
+        width: integer
+        height: integer
+        pixel_width: integer
+        pixel_height: integer
+        pane: Pane
+      end
+      panes_with_info: function(): {PaneInfo}
+      set_title: function(title: string): nil
+      set_zoomed: function(zoomed: boolean): nil
+      tab_id: function(): integer
+      window: function(): MuxWindow
+    end
+    record MuxWindow
+      get_title: function(): string
+      get_workspace: function(): string
+      set_title: function(title: string): nil
+      set_workspace: function(workspace: string): nil
+      record SpawnTabArgs
+        args: {string} | nil
+        cwd: string | nil
+        set_environment_variables: {string:string} | nil
+        domain: any | nil -- TODO: https://wezfurlong.org/wezterm/config/lua/mux-window/spawn_tab.html#domain
+      end
+      spawn_tab: function(tab: SpawnTabArgs): {MuxTab, Pane, MuxWindow}
+      tabs: function(): {MuxTab}
+      record MuxTabInfo
+        index: integer
+        is_active: boolean
+        tab: MuxTab
+      end
+      tabs_with_info: function(): {MuxTabInfo}
+      window_id: function(): integer
+    end
+    all_windows: function(): {MuxWindow}
     get_active_workspace: function(): string
-    get_pane: function(pane_id: integer): any -- TODO: once Pane is typed
-    get_tab: function(tab_id: integer): any -- TODO: once MuxTab is typed
-    get_window: function(window_id: integer): any -- TODO: once MuxWindow is typed
+    get_pane: function(pane_id: integer): Pane
+    get_tab: function(tab_id: integer): MuxTab
+    get_window: function(window_id: integer): MuxWindow
     get_workspace_names: function(): {string}
     set_active_workspace: function(name: string): nil
-    spawn_window: function(args: any): {any, any, any} -- TODO: MuxTab, Pane, MuxWindow
+    spawn_window: function(args: any): {MuxTab, Pane, MuxWindow}
   end
   mux: WeztermMux
 
   record WeztermProcInfo
     current_working_dir_for_pid: function(pid: integer): string | nil
     executable_path_for_pid: function(pid: integer): string | nil
-    record LocalProcessInfo
-      argv: {string}
-      children: {integer:LocalProcessInfo}
-      cwd: string
-      executable: string
-      name: string
-      pid: integer
-      ppid: integer
-      start_time: integer
-      enum LocalProcessInfoStatus
-        "Idle"
-        "Run"
-        "Sleep"
-        "Stop"
-        "Zombie"
-        "Tracing"
-        "Dead"
-        "Wakekill"
-        "Waking"
-        "Parked"
-        "LockBlocked"
-        "Unknown"
-      end
-      status: LocalProcessInfoStatus
-    end
     get_info_for_pid: function(pid: integer): {string:string}
     pid: function(): integer
   end
   proc_info: WeztermProcInfo
 
-  record WeztermTime
-    format: function(format: string): string
-    format_utc: function(format: string): string
-    record SunTimes
-      progression: number
-      rise: string
-      set: string
-      up: boolean
-    end
-    sun_times: function(lat: number, lon: number): SunTimes
-  end
 
   record WeztermTimeModule
-    call_after: function(interval_seconds: number, function(callback: function(): any)): any
-    now: function(): WeztermTime
-    parse: function(str: string, format: string): string
-    parse_rfc3339: function(str: string): string
+    call_after: function(interval_seconds: number, function(callback: function(): any)): nil
+    now: function(): Time
+    parse: function(str: string, format: string): Time
+    parse_rfc3339: function(str: string): Time
   end
   time: WeztermTimeModule
 
@@ -648,7 +987,7 @@ local record WeztermConfig
   custom_block_glyphs: boolean
   daemon_options: DaemonOptions
   debug_key_events: boolean
-  default_cursor_style: DefaultCursorStyle
+  default_cursor_style: CursorStyle
   default_cwd: string
   default_domain: string
   default_gui_startup_args: {string}
