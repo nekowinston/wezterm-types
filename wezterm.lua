@@ -21,10 +21,10 @@
 ---@field background_child_process fun(args: string[]): nil Accepts an argument list; it will attempt to spawn that command in the background.
 ---@field battery_info fun(): BatteryInfo[] Returns battery information for each of the installed batteries on the system. This is useful for example to assemble status information for the status bar.
 ---@field column_width fun(string): number Given a string parameter, returns the number of columns that that text occupies in the terminal, which is useful together with format-tab-title and update-right-status to compute/layout tabs and status information.
----@field config_builder fun(): WeztermConfig
+---@field config_builder fun(): WeztermConfig Returns a config builder object that can be used to define your configuration.
 ---@field config_dir string This constant is set to the path to the directory in which your wezterm.lua configuration file was found.
 ---@field config_file string This constant is set to the path to the wezterm.lua that is in use.
----@field color WezTermColor
+---@field color WezTermColor The `wezterm.color` module exposes functions that work with colors.
 ---@field default_hyperlink_rules fun(): HyperLinkRules[] Returns the compiled-in default values for hyperlink_rules.
 ---@field default_ssh_domains any #TODO
 ---@field default_wsl_domains any #TODO
@@ -72,22 +72,38 @@
 ---@field utf16_to_utf8 fun(string: string): string Overly specific and exists primarily to workaround this wsl.exe issue. It takes as input a string and attempts to convert it from utf16 to utf8.
 ---@field version string This constant is set to the wezterm version string that is also reported by running wezterm -V. This can potentially be used to adjust configuration according to the installed version.
 
+---@class Background
+---@field source string Defines the source of the layer texture data. See below for source definitions
+---@field attachment "Fixed" | "Scroll" | {Parallax: number} Controls whether the layer is fixed to the viewport or moves as it scrolls.
+---@field repeat_x "Repeat" | "Mirror" | "NoRepeat" Controls whether the image is repeated in the x-direction.
+---@field repeat_x_size number | string Normally, when repeating, the image is tiled based on its width such that each copy of the image is immediately adjacent to the preceding instance. You may set repeat_x_size to a different value to increase or decrease the space between the repeated instances.
+---@field repeat_y any Like `repeat_x` but affects the y-direction.
+---@field repeat_y_size any Like `repeat_x_size` but affects the y-direction.
+---@field vertical_align "Top" | "Middle" | "Bottom" Controls the initial vertical position of the layer, relative to the viewport:
+---@field vertical_offset number | string Specify an offset from the initial vertical position. Accepts:
+---@field horizontal_align "Left" | "Center" | "Right" Controls the initial horizontal position of the layer, relative to the viewport:
+---@field horizontal_offset number | string like `vertical_offset` but applies to the x-direction.
+---@field opacity number A number in the range 0 through 1.0 inclusive that is multiplied with the alpha channel of the source to adjust the opacity of the layer. The default is 1.0 to use the source alpha channel as-is. Using a smaller value makes the layer less opaque/more transparent.
+---@field hsb {hue: number, saturation: number, brightness: number} A hue, saturation, brightness tranformation that can be used to adjust those attributes of the layer. See `foreground_text_hsb` for more information about this kind of transform.
+---@field height "Cover" | "Contain" | number | string Controls the height of the image. The following values are accepted:
+---@field width "Cover" | "Contain" | number | string controls the width of the image. Same details as height but applies to the x-direction.
+
 ---@class WeztermConfig
----@field adjust_window_size_when_changing_font_size boolean
----@field allow_square_glyphs_to_overflow_width boolean
----@field allow_win32_input_mode boolean
----@field alternate_buffer_wheel_scroll_speed integer
----@field animation_fps integer
----@field audible_bell any #TODO
----@field automatically_reload_config boolean
----@field background any #TODO
----@field bold_brightens_ansi_colors boolean
----@field bypass_mouse_reporting_modifiers any #TODO
----@field canonicalize_pasted_newlines boolean | any #TODO
----@field cell_width number
----@field check_for_updates boolean
----@field check_for_updates_interval_seconds integer
----@field clean_exit_codes any
+---@field adjust_window_size_when_changing_font_size boolean Control whether changing the font size adjusts the dimensions of the window (true) or adjusts the number of terminal rows/columns (false). The default is true. If you use a tiling window manager then you may wish to set this to false.
+---@field allow_square_glyphs_to_overflow_width "WhenFollowedBySpace" | "Always" | "Never" Configures how square symbol glyph's cell is rendered.
+---@field allow_win32_input_mode boolean When set to true, wezterm will honor an escape sequence generated by the Windows ConPTY layer to switch the keyboard encoding to a proprietary scheme that has maximum compatibility with win32 console applications.
+---@field alternate_buffer_wheel_scroll_speed integer Normally the vertical mouse wheel will scroll the terminal viewport so that different sections of the scrollback are visible. When an application activates the Alternate Screen Buffer (this is common for "full screen" terminal programs such as pagers and editors), the alternate screen doesn't have a scrollback. In this mode, if the application hasn't enabled mouse reporting, wezterm will generate Arrow Up/Down key events when the vertical mouse wheel is scrolled.
+---@field animation_fps integer This setting controls the maximum frame rate used when rendering easing effects for blinking cursors, blinking text and visual bell. Setting it larger will result in smoother easing effects but will increase GPU utilization.
+---@field audible_bell "SystemBeep" | "Disabled" When the BEL ascii sequence is sent to a pane, the bell is "rung" in that pane. You may choose to configure the audible_bell option to change the sound that wezterm makes when the bell rings.
+---@field automatically_reload_config boolean When true (the default), watch the config file and reload it automatically when it is detected as changing. When false, you will need to manually trigger a config reload with a key bound to the action ReloadConfiguration.
+---@field background Background The background config option allows you to compose a number of layers to produce the background content in the terminal. Layers can be image files, gradients or solid blocks of color. Layers composite over each other based on their alpha channel. Images in layers can be made to fill the viewport or to tile, and also to scroll with optional parallax as the viewport is scrolled.
+---@field bold_brightens_ansi_colors boolean When true (the default), PaletteIndex 0-7 are shifted to bright when the font intensity is bold. This brightening effect doesn't occur when the text is set to the default foreground color! This defaults to true for better compatibility with a wide range of mature software; for instance, a lot of software assumes that Black+Bold renders as a Dark Grey which is legible on a Black background, but if this option is set to false, it would render as Black on Black.
+---@field bypass_mouse_reporting_modifiers "SHIFT" | "ALT" If an application has enabled mouse reporting mode, mouse events are sent directly to the application, and do not get routed through the mouse assignment logic. Holding down the bypass_mouse_reporting_modifiers modifier key(s) will prevent the event from being passed to the application. The default value for bypass_mouse_reporting_modifiers is SHIFT, which means that holding down shift while clicking will not send the mouse event to eg: vim running in mouse mode and will instead treat the event as though SHIFT was not pressed and then match it against the mouse assignments.
+---@field canonicalize_pasted_newlines boolean "None"	| "LineFeed" | "CarriageReturn"	| "CarriageReturnAndLineFeed" Controls whether pasted text will have newlines normalized. If bracketed paste mode is enabled by the application, the effective value of this configuration option is "None".
+---@field cell_width number Scales the computed cell width to adjust the spacing between successive cells of text. If possible, you should prefer to specify the stretch parameter when selecting a font using `wezterm.font` or `wezterm.font_with_fallback` as that will generally look better and have fewer undesirable side effects.
+---@field check_for_updates boolean Wezterm checks regularly if there is a new stable version available on github, and shows a simple UI to let you know about the update (See `show_update_window` to control this UI).
+---@field check_for_updates_interval_seconds integer Set an alternative update interval
+---@field clean_exit_codes number[] Defines the set of exit codes that are considered to be a "clean" exit by exit_behavior when the program running in the terminal completes. Acceptable values are an array of integer exit codes that you wish to treat as successful.
 ---@field color_scheme string
 ---@field color_schemes any #TODO
 ---@field colors any
@@ -150,7 +166,7 @@
 ---@field integrated_title_buttons any #TODO
 ---@field key_map_preference any #TODO
 ---@field key_tables any #TODO
----@field launch_menu any -- TODO: https://wezfurlong.org/wezterm/config/launch.html#the-launcher-menu
+---@field launch_menu any #TODO
 ---@field leader any #TODO
 ---@field line_height number
 ---@field log_unknown_escape_sequences any #TODO
@@ -238,7 +254,7 @@
 ---@field load_base16_scheme any #TODO
 ---@field load_scheme any #TODO
 ---@field load_terminal_sexy_scheme any #TODO
----@field parse fun(color: string): WezTermColorObj? Parses the passed color and returns a Color object. Color objects evaluate as strings but have a number of methods that allow transforming and comparing colors.
+---@field parse fun(color: string): ColorObj? Parses the passed color and returns a Color object. Color objects evaluate as strings but have a number of methods that allow transforming and comparing colors.
 ---@field save_scheme any #TODO
 
 ---@class WezTermGui
@@ -283,44 +299,44 @@
 ---@field cwd string? the current working directory for the process (may be empty)
 ---@field children LocalProcessInfo a table keyed by child process id and whose values are themselves LocalProcessInfo objects that describe the child processes
 
----@class WezTermProcInfo
+---@class ProcInfo
 ---@field current_working_dir_for_pid string? Returns the current working directory for the specified process id. This function may return nil if it was unable to return the info.
 ---@field executable_path_for_pid string? Returns the path to the executable image for the specified process id. This function may return nil if it was unable to return the info.
 ---@field get_info_for_pid fun(pid: number): LocalProcessInfo Returns a LocalProcessInfo object for the specified process id.
 ---@field pid fun(): number Returns the process id for the current process.
 
----@class WezTermTimeObj
----@field format fun(self: WezTermTimeObj, format: string): string Formats the time object as a string, using the local date/time representation of the time.
----@field format_utc fun(self: WezTermTimeObj, format: string): string Formats the time object as a string, using the UTC date/time representation of the time.
----@field sun_times fun(self: WezTermTimeObj, lat: number, lon: number): { rise: WezTermTimeObj, set: WezTermTimeObj, progression: number, up: boolean } For the date component of the time object, compute the times of the sun rise and sun set for the given latitude and longitude.
+---@class TimeObj
+---@field format fun(self: TimeObj, format: string): string Formats the time object as a string, using the local date/time representation of the time.
+---@field format_utc fun(self: TimeObj, format: string): string Formats the time object as a string, using the UTC date/time representation of the time.
+---@field sun_times fun(self: TimeObj, lat: number, lon: number): { rise: TimeObj, set: TimeObj, progression: number, up: boolean } For the date component of the time object, compute the times of the sun rise and sun set for the given latitude and longitude.
 
----@class WezTermTime
+---@class Time
 ---@field call_after fun(interval: number, function: function): nil Arranges to call your callback function after the specified number of seconds have elapsed.
----@field now fun(): WezTermTimeObj Returns a WezTermTimeObj object representing the time at which wezterm.time.now() was called.
----@field parse fun(string): WezTermTimeObj Parses a string that is formatted according to the supplied format string.
----@field parse_rfc3339 fun(string): WezTermTimeObj Parses a string that is formatted according to RFC 3339 and returns a Time object representing that time.
+---@field now fun(): TimeObj Returns a WezTermTimeObj object representing the time at which wezterm.time.now() was called.
+---@field parse fun(string): TimeObj Parses a string that is formatted according to the supplied format string.
+---@field parse_rfc3339 fun(string): TimeObj Parses a string that is formatted according to RFC 3339 and returns a Time object representing that time.
 
----@class WezTermColorObj
----@field adjust_hue_fixed fun(self: WezTermColorObj, degrees: number): WezTermColorObj Adjust the hue angle by the specified number of degrees.
----@field adjust_hue_fixed_ryb fun(self: WezTermColorObj, degrees: number): WezTermColorObj Adjust the hue angle by the specified number of degrees.
----@field complement fun(self: WezTermColorObj): WezTermColorObj Returns the complement of the color. The complement is computed by converting to HSL, rotating by 180 degrees and converting back to RGBA.
----@field complement_ryb fun(self: WezTermColorObj): WezTermColorObj Returns the complement of the color using the RYB color model, which more closely matches how artists think of mixing colors.
----@field contrast_ratio fun(self: WezTermColorObj, other: WezTermColorObj): number Computes the contrast ratio between the two colors.
----@field darken fun(self: WezTermColorObj, amount: number): WezTermColorObj Scales the color towards the minimum lightness by the provided factor, which should be in the range 0.0 through 1.0.
----@field darken_fixed fun(self: WezTermColorObj, amount: number): WezTermColorObj Decrease the lightness by amount, a value ranging from 0.0 to 1.0.
----@field delta_e fun(self: WezTermColorObj, other: WezTermColorObj): number Computes the CIEDE2000 DeltaE value representing the difference between the two colors.
----@field desaturate fun(self: WezTermColorObj, amount: number): WezTermColorObj Scales the color towards the minimum saturation by the provided factor, which should be in the range 0.0 through 1.0.
----@field desaturate_fixed fun(self: WezTermColorObj, amount: number): WezTermColorObj Decrease the saturation by amount, a value ranging from 0.0 to 1.0.
----@field hsla fun(self: WezTermColorObj): {h: number, s: number, l: number, a: number} Converts the color to the HSL colorspace and returns those values + alpha.
----@field laba fun(self: WezTermColorObj): {l: number, a: number, b: number, a: number} Converts the color to the LAB colorspace and returns those values + alpha.
----@field lighten fun(self: WezTermColorObj, amount: number): WezTermColorObj Scales the color towards the maximum lightness by the provided factor, which should be in the range 0.0 through 1.0.
----@field lighten_fixed fun(self: WezTermColorObj, amount: number): WezTermColorObj Increase the lightness by amount, a value ranging from 0.0 to 1.0.
----@field linear_rgba fun(self: WezTermColorObj): {r: number, g: number, b: number, a: number} Returns a tuple of the colors converted to linear RGBA and expressed as floating point numbers in the range 0.0-1.0.
----@field saturate fun(self: WezTermColorObj, amount: number): WezTermColorObj Scales the color towards the maximum saturation by the provided factor, which should be in the range 0.0 through 1.0.
----@field saturate_fixed fun(self: WezTermColorObj, amount: number): WezTermColorObj Increase the saturation by amount, a value ranging from 0.0 to 1.0.
----@field square fun(self: WezTermColorObj): {a: WezTermColorObj, b: WezTermColorObj, c: WezTermColorObj} Returns the other three colors that form a square. The other colors are 90 degrees apart on the HSL color wheel.
----@field srgb_u8 fun(self: WezTermColorObj): {r: number, g: number, b: number, a: number} Returns a tuple of the internal SRGBA colors expressed as unsigned 8-bit integers in the range 0-255.
----@field triad fun(self: WezTermColorObj): {a: WezTermColorObj, b: WezTermColorObj} Returns the other two colors that form a triad. The other colors are at +/- 120 degrees in the HSL color wheel.
+---@class ColorObj
+---@field adjust_hue_fixed fun(self: ColorObj, degrees: number): ColorObj Adjust the hue angle by the specified number of degrees.
+---@field adjust_hue_fixed_ryb fun(self: ColorObj, degrees: number): ColorObj Adjust the hue angle by the specified number of degrees.
+---@field complement fun(self: ColorObj): ColorObj Returns the complement of the color. The complement is computed by converting to HSL, rotating by 180 degrees and converting back to RGBA.
+---@field complement_ryb fun(self: ColorObj): ColorObj Returns the complement of the color using the RYB color model, which more closely matches how artists think of mixing colors.
+---@field contrast_ratio fun(self: ColorObj, other: ColorObj): number Computes the contrast ratio between the two colors.
+---@field darken fun(self: ColorObj, amount: number): ColorObj Scales the color towards the minimum lightness by the provided factor, which should be in the range 0.0 through 1.0.
+---@field darken_fixed fun(self: ColorObj, amount: number): ColorObj Decrease the lightness by amount, a value ranging from 0.0 to 1.0.
+---@field delta_e fun(self: ColorObj, other: ColorObj): number Computes the CIEDE2000 DeltaE value representing the difference between the two colors.
+---@field desaturate fun(self: ColorObj, amount: number): ColorObj Scales the color towards the minimum saturation by the provided factor, which should be in the range 0.0 through 1.0.
+---@field desaturate_fixed fun(self: ColorObj, amount: number): ColorObj Decrease the saturation by amount, a value ranging from 0.0 to 1.0.
+---@field hsla fun(self: ColorObj): {h: number, s: number, l: number, a: number} Converts the color to the HSL colorspace and returns those values + alpha.
+---@field laba fun(self: ColorObj): {l: number, a: number, b: number, a: number} Converts the color to the LAB colorspace and returns those values + alpha.
+---@field lighten fun(self: ColorObj, amount: number): ColorObj Scales the color towards the maximum lightness by the provided factor, which should be in the range 0.0 through 1.0.
+---@field lighten_fixed fun(self: ColorObj, amount: number): ColorObj Increase the lightness by amount, a value ranging from 0.0 to 1.0.
+---@field linear_rgba fun(self: ColorObj): {r: number, g: number, b: number, a: number} Returns a tuple of the colors converted to linear RGBA and expressed as floating point numbers in the range 0.0-1.0.
+---@field saturate fun(self: ColorObj, amount: number): ColorObj Scales the color towards the maximum saturation by the provided factor, which should be in the range 0.0 through 1.0.
+---@field saturate_fixed fun(self: ColorObj, amount: number): ColorObj Increase the saturation by amount, a value ranging from 0.0 to 1.0.
+---@field square fun(self: ColorObj): {a: ColorObj, b: ColorObj, c: ColorObj} Returns the other three colors that form a square. The other colors are 90 degrees apart on the HSL color wheel.
+---@field srgb_u8 fun(self: ColorObj): {r: number, g: number, b: number, a: number} Returns a tuple of the internal SRGBA colors expressed as unsigned 8-bit integers in the range 0-255.
+---@field triad fun(self: ColorObj): {a: ColorObj, b: ColorObj} Returns the other two colors that form a triad. The other colors are at +/- 120 degrees in the HSL color wheel.
 
 ---@class KeyAssignment
 ---@field ActivateCommandPalette any
