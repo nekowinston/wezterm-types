@@ -4004,7 +4004,6 @@
 ---@field weather_night_alt_partly_cloudy string
 ---@field weather_night_alt_rain string
 ---@field weather_night_alt_rain_mix string
----@field weather_night_alt_rain_mix string
 ---@field weather_night_alt_rain_wind string
 ---@field weather_night_alt_sleet string
 ---@field weather_night_alt_sleet_storm string
