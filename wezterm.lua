@@ -92,6 +92,30 @@
 
 ---@alias EasingFunction "Linear" | "Ease" | "EaseIn" | "EaseInOut" | "EaseOut" | {CubicBezier: number[]} | "Constant"
 
+---@alias Color {AnsiColor: string?, Color: string?}
+---@class ColorScheme
+---@field foreground string The default foreground color
+---@field background string The default background color
+---@field cursor_bg string Overrides the cell background color when the current cell is occupied by the cursor and the cursor style is set to Block
+---@field cursor_border string Specifies the border color of the cursor when the cursor style is set to Block, or the color of the vertical or horizontal bar when the cursor style is set to Bar or Underline.
+---@field cursor_fg string Overrides the cell foreground color when the current cell is occupied by the cursor and the cursor style is set to Block
+---@field selection_bg string The background color of selected text
+---@field selection_fg string The foreground color of selected text
+---@field scrollbar_thumb string The color of the scrollbar "thumb"; the portion that represents the current viewport
+---@field split string The color of the split lines between panes
+---@field ansi string[] The color palette for the first 8 ANSI colors
+---@field brights string[] The color palette for the second 8 ANSI colors
+---@field indexed table<number, string> Arbitrary colors of the palette in the range from 16 to 255
+---@field composer_cursor string The color of the cursor when the IME is active
+---@field copy_mode_active_highlight_bg Color The background color of the active text in copy mode
+---@field copy_mode_active_highlight_fg Color The foreground color of the active text in copy mode
+---@field copy_mode_inactive_highlight_bg Color The background color of the inactive text in copy mode
+---@field copy_mode_inactive_highlight_fg Color The foreground color of the inactive text in copy mode
+---@field quick_select_label_bg Color The background color of the label in quick select mode
+---@field quick_select_label_fg Color The foreground color of the label in quick select mode
+---@field quick_select_match_bg Color The background color of the match in quick select mode
+---@field quick_select_match_fg Color The foreground color of the match in quick select mode
+
 ---@class WeztermConfig
 ---@field adjust_window_size_when_changing_font_size boolean Control whether changing the font size adjusts the dimensions of the window (true) or adjusts the number of terminal rows/columns (false). The default is true. If you use a tiling window manager then you may wish to set this to false.
 ---@field allow_square_glyphs_to_overflow_width "WhenFollowedBySpace" | "Always" | "Never" Configures how square symbol glyph's cell is rendered.
@@ -108,9 +132,9 @@
 ---@field check_for_updates boolean Wezterm checks regularly if there is a new stable version available on github, and shows a simple UI to let you know about the update (See `show_update_window` to control this UI).
 ---@field check_for_updates_interval_seconds integer Set an alternative update interval
 ---@field clean_exit_codes number[] Defines the set of exit codes that are considered to be a "clean" exit by exit_behavior when the program running in the terminal completes. Acceptable values are an array of integer exit codes that you wish to treat as successful.
----@field color_scheme string
----@field color_schemes any #TODO
----@field colors any
+---@field color_scheme string Specifies the name of the color scheme to use.
+---@field color_schemes table<string, ColorScheme> If you'd like to keep a couple of color schemes handy in your configuration file, rather than filling out the colors section, place it in a `color_schemes` section; you can then reference it using the color_scheme setting.
+---@field colors ColorScheme You can specify the color palette using the colors configuration section.
 ---@field command_palette_bg_color string Specifies the background color used by ActivateCommandPalette.
 ---@field command_palette_fg_color string Specifies the foreground color used by ActivateCommandPalette.
 ---@field command_palette_font_size number Specifies the font size used by ActivateCommandPalette.
