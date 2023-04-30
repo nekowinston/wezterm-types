@@ -93,6 +93,21 @@
 ---@alias EasingFunction "Linear" | "Ease" | "EaseIn" | "EaseInOut" | "EaseOut" | {CubicBezier: number[]} | "Constant"
 
 ---@alias Color {AnsiColor: string?, Color: string?}
+---@class ColorSchemeTabBarTab
+---@field bg_color string The color of the background area for the tab
+---@field fg_color string The color of the text for the tab
+---@field intensity "Half" | "Normal" | "Bold" Specify whether you want "Half", "Normal" or "Bold" intensity for the label shown for this tab. The default is "Normal"
+---@field underline "None" | "Single" | "Double" Specify whether you want "None", "Single" or "Double" underline for the label shown for this tab. The default is "None"
+---@field italic boolean Specify whether you want italic text for the label shown for this tab. The default is false
+---@field strikethrough boolean Specify whether you want strikethrough text for the label shown for this tab. The default is false
+---@class ColorSchemeTabBar
+---@field background string The color of the strip that goes along the top of the window (does not apply when fancy tab bar is in use)
+---@field active_tab ColorSchemeTabBarTab The active tab is the one that has focus in the window
+---@field inactive_tab ColorSchemeTabBarTab The inactive tab is the one that does not have focus in the window
+---@field inactive_tab_hover ColorSchemeTabBarTab You can configure some alternate styling when the mouse pointer moves over inactive tabs
+---@field new_tab ColorSchemeTabBarTab The new tab button that let you create new tabs
+---@field new_tab_hover ColorSchemeTabBarTab You can configure some alternate styling when the mouse pointer moves over the new tab button
+
 ---@class ColorScheme
 ---@field foreground string The default foreground color
 ---@field background string The default background color
@@ -115,6 +130,7 @@
 ---@field quick_select_label_fg Color The foreground color of the label in quick select mode
 ---@field quick_select_match_bg Color The background color of the match in quick select mode
 ---@field quick_select_match_fg Color The foreground color of the match in quick select mode
+---@field tab_bar ColorSchemeTabBar The colors and config for the tab bar
 
 ---@class WeztermConfig
 ---@field adjust_window_size_when_changing_font_size boolean Control whether changing the font size adjusts the dimensions of the window (true) or adjusts the number of terminal rows/columns (false). The default is true. If you use a tiling window manager then you may wish to set this to false.
@@ -276,7 +292,7 @@
 ---@class WezTermColor
 ---@field extract_colors_from_image any #TODO
 ---@field from_hsla any #TODO
----@field get_builtin_schemes any #TODO
+---@field get_builtin_schemes fun(): table<string, ColorScheme>
 ---@field get_default_colors any #TODO
 ---@field gradient any #TODO
 ---@field load_base16_scheme any #TODO
