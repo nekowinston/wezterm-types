@@ -13,6 +13,8 @@
 ---@field format string
 ---@field highlight number?
 
+---@alias Font any #TODO
+
 ---@class wezterm
 ---@field GLOBAL any
 ---@field action KeyAssignment
@@ -31,8 +33,8 @@
 ---@field emit fun(event: string, ...)
 ---@field enumerate_ssh_hosts any #TODO
 ---@field executable_dir string This constant is set to the directory containing the wezterm executable file.
----@field font fun(name: string, font_attributes: FontAttributes?): nil | fun(font_attributes: FontAttributes): nil https://wezfurlong.org/wezterm/config/lua/wezterm/font.html
----@field font_with_fallback fun(fonts: string[] | FontAttributes[]): nil https://wezfurlong.org/wezterm/config/lua/wezterm/font_with_fallback.html
+---@field font fun(name: string, font_attributes: FontAttributes?): Font | fun(font_attributes: FontAttributes): Font https://wezfurlong.org/wezterm/config/lua/wezterm/font.html
+---@field font_with_fallback fun(fonts: string[] | FontAttributes[]): Font https://wezfurlong.org/wezterm/config/lua/wezterm/font_with_fallback.html
 ---@field format fun(format: any[]): string Can be used to produce a formatted string with terminal graphic attributes such as bold, italic and colors. The resultant string is rendered into a string with wezterm compatible escape sequences embedded.
 ---@field get_builtin_color_schemes any #TODO
 ---@field glob fun(pattern: string, relative_to: string?): string[] This function evalutes the glob pattern and returns an array containing the absolute file names of the matching results. Due to limitations in the lua bindings, all of the paths must be able to be represented as UTF-8 or this function will generate an error.
@@ -88,6 +90,8 @@
 ---@field height "Cover" | "Contain" | number | string Controls the height of the image. The following values are accepted:
 ---@field width "Cover" | "Contain" | number | string controls the width of the image. Same details as height but applies to the x-direction.
 
+---@alias EasingFunction "Linear" | "Ease" | "EaseIn" | "EaseInOut" | "EaseOut" | {CubicBezier: number[]} | "Constant"
+
 ---@class WeztermConfig
 ---@field adjust_window_size_when_changing_font_size boolean Control whether changing the font size adjusts the dimensions of the window (true) or adjusts the number of terminal rows/columns (false). The default is true. If you use a tiling window manager then you may wish to set this to false.
 ---@field allow_square_glyphs_to_overflow_width "WhenFollowedBySpace" | "Always" | "Never" Configures how square symbol glyph's cell is rendered.
@@ -107,43 +111,43 @@
 ---@field color_scheme string
 ---@field color_schemes any #TODO
 ---@field colors any
----@field command_palette_bg_color any #TODO
----@field command_palette_fg_color any #TODO
----@field command_palette_font_size any #TODO
----@field cursor_blink_ease_in any #TODO
----@field cursor_blink_ease_out any #TODO
----@field cursor_blink_rate integer
----@field cursor_thickness string
----@field custom_block_glyphs boolean
----@field daemon_options any #TODO
----@field debug_key_events boolean
----@field default_cursor_style any #TODO
----@field default_cwd string
----@field default_domain string
----@field default_gui_startup_args any #TODO
----@field default_prog any #TODO
----@field default_workspace string
----@field detect_password_input boolean
----@field disable_default_key_bindings boolean
----@field disable_default_mouse_bindings boolean
----@field disable_default_quick_select_patterns boolean
----@field display_pixel_geometry any #TODO
----@field dpi number
----@field enable_csi_u_key_encoding boolean
----@field enable_kitty_keyboard boolean
----@field enable_scroll_bar boolean
----@field enable_tab_bar boolean
----@field enable_wayland boolean
----@field exit_behavior any #TODO
----@field font any #TODO
----@field font_antialias any #TODO
----@field font_dirs string #TODO
----@field font_hinting any #TODO
----@field font_locator any #TODO
----@field font_rasterizer any #TODO
----@field font_rules any #TODO
----@field font_shaper any #TODO
----@field font_size number
+---@field command_palette_bg_color string Specifies the background color used by ActivateCommandPalette.
+---@field command_palette_fg_color string Specifies the foreground color used by ActivateCommandPalette.
+---@field command_palette_font_size number Specifies the font size used by ActivateCommandPalette.
+---@field cursor_blink_ease_in EasingFunction Specifies the easing function to use when computing the color for the text cursor when it is set to a blinking style.
+---@field cursor_blink_ease_out EasingFunction Specifies the easing function to use when computing the color for the text cursor when it is set to a blinking style.
+---@field cursor_blink_rate integer Specifies how often a blinking cursor transitions between visible and invisible, expressed in milliseconds. Setting this to 0 disables blinking. Note that this value is approximate due to the way that the system event loop schedulers manage timers; non-zero values will be at least the interval specified with some degree of slop.
+---@field cursor_thickness number | string If specified, overrides the base thickness of the lines used to render the textual cursor glyph. The default is to use the `underline_thickness`.
+---@field custom_block_glyphs boolean When set to true (the default), WezTerm will compute its own idea of what the glyphs in the following unicode ranges should be, instead of using glyphs resolved from a font. Ideally this option wouldn't exist, but it is present to work around a hinting issue in freetype.
+---@field daemon_options {stdout: string, stderr: string, pid_file: string} Allows configuring the multiplexer (mux) server and how it places itself into the background to run as a daemon process. You should not normally need to configure this setting; the defaults should be sufficient in most cases.
+---@field debug_key_events boolean When set to true, each key event will be logged by the GUI layer as an INFO level log message on the stderr stream from wezterm. You will typically need to launch wezterm directly from another terminal to see this logging. This can be helpful in figuring out how keys are being decoded on your system, or for discovering the system-dependent "raw" key code values.
+---@field default_cursor_style "SteadyBlock" | "BlinkingBlock" | "SteadyUnderline" | "BlinkingUnderline" | "SteadyBar" | "BlinkingBar"
+---@field default_cwd string Sets the default current working directory used by the initial window. The value is a string specifying the absolute path that should be used for the home directory. Using strings like ~ or ~username that are typically expanded by the shell is not supported. You can use wezterm.home_dir to explicitly refer to your home directory.
+---@field default_domain string When starting the GUI (not using the serial or connect subcommands), by default wezterm will set the built-in "local" domain as the default multiplexing domain. The "local" domain represents processes that are spawned directly on the local system.
+---@field default_gui_startup_args string[] When launching the GUI using either wezterm or wezterm-gui (with no subcommand explicitly specified), wezterm will use the value of default_gui_startup_args to pick a default mode for running the GUI. The default for this config is {"start"} which makes wezterm with no additional subcommand arguments equivalent to wezterm start.
+---@field default_prog string[] If no prog is specified on the command line, use this instead of running the user's shell. For example, to have wezterm always run top by default, you'd use this:
+---@field default_workspace string Specifies the name of the default workspace. The default is "default".
+---@field detect_password_input boolean When set to true, on unix systems, for local panes, wezterm will query the termios associated with the PTY to see whether local echo is disabled and canonical input is enabled. If those conditions are met, then the text cursor will be changed to a lock to give a visual cue that what you type will not be echoed to the screen.
+---@field disable_default_key_bindings boolean If set to true, the default mouse assignments will not be used, allowing you to tightly control those assignments.
+---@field disable_default_mouse_bindings boolean If set to true, the default mouse assignments will not be used, allowing you to tightly control those assignments.
+---@field disable_default_quick_select_patterns boolean  When set to true, the default set of quick select patterns are omitted, and your quick_select_patterns config specifies the total set of patterns used for quick select mode. Defaults to false.
+---@field display_pixel_geometry "RGB" | "BGR" Configures whether subpixel anti-aliasing should produce either "RGB" or "BGR" ordered output. If your display has a BGR pixel geometry then you will want to set this to "BGR" for the best results when using subpixel antialiasing. The default value is "RGB".
+---@field dpi number Override the detected DPI (dots per inch) for the display. This can be useful if the detected DPI is inaccurate and the text appears either blurry or too small (especially if you are using a 4K display on X11 or Wayland).
+---@field enable_csi_u_key_encoding boolean When set to true, the keyboard encoding will be changed to use the scheme that is described here. It is not recommended to enable this option as it does change the behavior of some keys in backwards incompatible ways and there isn't a way for applications to detect or request this behavior. The default for this option is false.
+---@field enable_kitty_keyboard boolean When set to true, wezterm will honor kitty keyboard protocol escape sequences that modify the keyboard encoding.
+---@field enable_scroll_bar boolean Enable the scrollbar. This is currently disabled by default. It will occupy the right window padding space. If right padding is set to 0 then it will be increased to a single cell width.
+---@field enable_tab_bar boolean Controls whether the tab bar is enabled. Set to false to disable it. See also `hide_tab_bar_if_only_one_tab`
+---@field enable_wayland boolean If false, do not try to use a Wayland protocol connection when starting the gui frontend, and instead use X11. This option is only considered on X11/Wayland systems and has no effect on macOS or Windows. The default is true. In versions prior to 20220624-141144-bd1b7c5d it was disabled by default.
+---@field exit_behavior "Close" | "Hold" | "CloseOnCleanExit" Controls the behavior when the shell program spawned by the terminal exits.
+---@field font Font Configures the font to use by default. The font setting can specify a set of fallbacks and other options, and is described in more detail in the Fonts section. You will typically use `wezterm.font` or `wezterm.font_with_fallback` to specify the font.
+---@field font_antialias "None" | "Greyscale" | "Subpixel" @deprecated Use freetype_load_target instead
+---@field font_dirs string[] By default, wezterm will use an appropriate system-specific method for locating the fonts that you specify using the options below. In addition, if you configure the `font_dirs` option, wezterm will load fonts from that set of directories.
+---@field font_hinting "None" | "Vertical" | "VerticalSubpixel" | "Full" @deprecated Use `freetype_load_target` instead
+---@field font_locator "ConfigDirsOnly" | nil specifies the method by which system fonts are located and loaded. You may specify ConfigDirsOnly to disable loading system fonts and use only the fonts found in the directories that you specify in your font_dirs configuration option. Otherwise, it is recommended to omit this setting.
+---@field font_rasterizer "FreeType" Specifies the method by which fonts are rendered on screen. The only available implementation is FreeType.
+---@field font_rules {intensity: FontWeight, italic: boolean, font: Font}[] When textual output in the terminal is styled with bold, italic or other attributes, wezterm uses font_rules to decide how to render that text. By default, unstyled text will use the font specified by the font configuration, and wezterm will use that as a base, and then automatically generate appropriate font_rules that use heavier weight fonts for bold text, lighter weight fonts for dim text and italic fonts for italic text. Most users won't need to specify any explicit value for font_rules, as the defaults should be sufficient.
+---@field font_shaper "Harfbuzz" @deprecated
+---@field font_size number Specifies the size of the font, measured in points. You may use fractional point sizes, such as 13.3, to fine tune the size.
 ---@field force_reverse_video_cursor boolean
 ---@field foreground_text_hsb any #TODO
 ---@field freetype_interpreter_version integer
