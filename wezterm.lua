@@ -1,0 +1,405 @@
+---@meta
+---@class WeztermPlugin
+---@field require fun(url: string): any
+
+---@alias FontStretch "UltraCondensed" | "ExtraCondensed" | "Condensed" | "SemiCondensed" | "Normal" | "SemiExpanded" | "Expanded" | "ExtraExpanded" | "UltraExpanded"
+---@alias FontWeight "Thin" | "ExtraLight" | "Light" | "DemiLight" | "Book" | "Regular" | "Medium" | "DemiBold" | "Bold" | "ExtraBold" | "Black" | "ExtraBlack".
+---@alias FreeTypeRenderTarget "Normal" | "HorizontalLcd"
+---@alias FreeTypeLoadTarget "Normal" | "Light" | "Mono" | "HorizontalLcd"
+---@alias FontAttributes { family: string, harfbuzz_features: string[], stretch: FontStretch, weight: FontWeight, freetype_load_flags: string, freetype_load_target: FreeTypeLoadTarget, freetype_render_target: FreeTypeRenderTarget, assume_emoji_presentation: boolean }
+
+---@class HyperLinkRules
+---@field regex string
+---@field format string
+---@field highlight number?
+
+---@class wezterm
+---@field GLOBAL any
+---@field action KeyAssignment
+---@field action_callback any
+---@field add_to_config_reload_watch_list fun(path: string): nil Adds path to the list of files that are watched for config changes. If `automatically_reload_config` is enabled, then the config will be reloaded when any of the files that have been added to the watch list have changed.
+---@field background_child_process fun(args: string[]): nil Accepts an argument list; it will attempt to spawn that command in the background.
+---@field battery_info fun(): BatteryInfo[] Returns battery information for each of the installed batteries on the system. This is useful for example to assemble status information for the status bar.
+---@field column_width fun(string): number Given a string parameter, returns the number of columns that that text occupies in the terminal, which is useful together with format-tab-title and update-right-status to compute/layout tabs and status information.
+---@field config_builder fun(): WeztermConfig
+---@field config_dir string This constant is set to the path to the directory in which your wezterm.lua configuration file was found.
+---@field config_file string This constant is set to the path to the wezterm.lua that is in use.
+---@field color WezTermColor
+---@field default_hyperlink_rules fun(): HyperLinkRules[] Returns the compiled-in default values for hyperlink_rules.
+---@field default_ssh_domains any #TODO
+---@field default_wsl_domains any #TODO
+---@field emit fun(event: string, ...)
+---@field enumerate_ssh_hosts any #TODO
+---@field executable_dir string This constant is set to the directory containing the wezterm executable file.
+---@field font fun(name: string, font_attributes: FontAttributes?): nil | fun(font_attributes: FontAttributes): nil https://wezfurlong.org/wezterm/config/lua/wezterm/font.html
+---@field font_with_fallback fun(fonts: string[] | FontAttributes[]): nil https://wezfurlong.org/wezterm/config/lua/wezterm/font_with_fallback.html
+---@field format fun(format: any[]): string Can be used to produce a formatted string with terminal graphic attributes such as bold, italic and colors. The resultant string is rendered into a string with wezterm compatible escape sequences embedded.
+---@field get_builtin_color_schemes any #TODO
+---@field glob fun(pattern: string, relative_to: string?): string[] This function evalutes the glob pattern and returns an array containing the absolute file names of the matching results. Due to limitations in the lua bindings, all of the paths must be able to be represented as UTF-8 or this function will generate an error.
+---@field gui WezTermGui
+---@field gradient_colors any #TODO
+---@field has_action fun(action: string): boolean
+---@field mux WezTermMux
+---@field home_dir string This constant is set to the home directory of the user running wezterm.
+---@field hostname fun(): string This function returns the current hostname of the system that is running wezterm. This can be useful to adjust configuration based on the host.
+---@field json_encode fun(value: any): string Encodes the supplied lua value as json.
+---@field json_parse fun(value: string): any Parses the supplied string as json and returns the equivalent lua values.
+---@field log_error fun(msg: any, ...): nil Logs the provided message string through wezterm's logging layer at 'ERROR' level. If you started wezterm from a terminal that text will print to the stdout of that terminal. If running as a daemon for the multiplexer server then it will be logged to the daemon output path.
+---@field log_info fun(msg: any, ...): nil Logs the provided message string through wezterm's logging layer at 'INFO' level. If you started wezterm from a terminal that text will print to the stdout of that terminal. If running as a daemon for the multiplexer server then it will be logged to the daemon output path.
+---@field log_warn fun(msg: any, ...): nil Logs the provided message string through wezterm's logging layer at 'WARN' level. If you started wezterm from a terminal that text will print to the stdout of that terminal. If running as a daemon for the multiplexer server then it will be logged to the daemon output path.
+---@field nerdfonts WezTermNF
+---@field on fun(event: string, callback: fun(window: any, pane: any))
+---@field open_with fun(path_or_url: string, application: string?) This function opens the specified path_or_url with either the specified application or uses the default application if application was not passed in.
+---@field pad_left fun(string, min_width): string Returns a copy of string that is at least min_width columns (as measured by wezterm.column_width)
+---@field pad_right fun(string, min_width): string Returns a copy of string that is at least min_width columns (as measured by wezterm.column_width).
+---@field permute_any_mods any #TODO
+---@field permute_any_or_no_mods any #TODO
+---@field plugin WeztermPlugin
+---@field read_dir fun(path: string): string Returns an array containing the absolute file names of the directory specified. Due to limitations in the lua bindings, all of the paths must be able to be represented as UTF-8 or this function will generate an error.
+---@field reload_configuration fun(): nil Immediately causes the configuration to be reloaded and re-applied.
+---@field run_child_process fun(args: string[]): {success: boolean, stdout: string, stderr: string} Will attempt to spawn that command and will return a tuple consisting of the boolean success of the invocation, the stdout data and the stderr data.
+---@field running_under_wsl fun(): boolean Returns a boolean indicating whether we believe that we are running in a Windows Services for Linux (WSL) container.
+---@field shell_join_args fun(args: string[]): string Joins together its array arguments by applying posix style shell quoting on each argument and then adding a space.
+---@field shell_quote_arg fun(string: string): string Quotes its single argument using posix shell quoting rules.
+---@field shell_split fun(line: string): string[] Splits a command line into an argument array according to posix shell rules.
+---@field sleep_ms fun(milliseconds: number): nil wezterm.sleep_ms suspends execution of the script for the specified number of milliseconds. After that time period has elapsed, the script continues running at the next statement.
+---@field split_by_newlines fun(string: string): string[] takes the input string and splits it by newlines (both \n and \r\n are recognized as newlines) and returns the result as an array of strings that have the newlines removed.
+---@field strftime fun(format: string): string Formats the current local date/time into a string using the Rust chrono strftime syntax.
+---@field strftime_utc fun(format: string): string Formats the current UTC date/time into a string using the Rust chrono strftime syntax.
+---@field target_triple string This constant is set to the Rust target triple for the platform on which wezterm was built. This can be useful when you wish to conditionally adjust your configuration based on the platform.
+---@field truncate_left fun(string: string, max_width: number): string Returns a copy of string that is no longer than max_width columns (as measured by wezterm.column_width). Truncation occurs by reemoving excess characters from the left end of the string.
+---@field truncate_right fun(string: string, max_width: number): string Returns a copy of string that is no longer than max_width columns (as measured by wezterm.column_width). Truncation occurs by reemoving excess characters from the right end of the string.
+---@field utf16_to_utf8 fun(string: string): string Overly specific and exists primarily to workaround this wsl.exe issue. It takes as input a string and attempts to convert it from utf16 to utf8.
+---@field version string This constant is set to the wezterm version string that is also reported by running wezterm -V. This can potentially be used to adjust configuration according to the installed version.
+
+---@class WeztermConfig
+---@field adjust_window_size_when_changing_font_size boolean
+---@field allow_square_glyphs_to_overflow_width boolean
+---@field allow_win32_input_mode boolean
+---@field alternate_buffer_wheel_scroll_speed integer
+---@field animation_fps integer
+---@field audible_bell any #TODO
+---@field automatically_reload_config boolean
+---@field background any #TODO
+---@field bold_brightens_ansi_colors boolean
+---@field bypass_mouse_reporting_modifiers any #TODO
+---@field canonicalize_pasted_newlines boolean | any #TODO
+---@field cell_width number
+---@field check_for_updates boolean
+---@field check_for_updates_interval_seconds integer
+---@field clean_exit_codes any
+---@field color_scheme string
+---@field color_schemes any #TODO
+---@field colors any
+---@field command_palette_bg_color any #TODO
+---@field command_palette_fg_color any #TODO
+---@field command_palette_font_size any #TODO
+---@field cursor_blink_ease_in any #TODO
+---@field cursor_blink_ease_out any #TODO
+---@field cursor_blink_rate integer
+---@field cursor_thickness string
+---@field custom_block_glyphs boolean
+---@field daemon_options any #TODO
+---@field debug_key_events boolean
+---@field default_cursor_style any #TODO
+---@field default_cwd string
+---@field default_domain string
+---@field default_gui_startup_args any #TODO
+---@field default_prog any #TODO
+---@field default_workspace string
+---@field detect_password_input boolean
+---@field disable_default_key_bindings boolean
+---@field disable_default_mouse_bindings boolean
+---@field disable_default_quick_select_patterns boolean
+---@field display_pixel_geometry any #TODO
+---@field dpi number
+---@field enable_csi_u_key_encoding boolean
+---@field enable_kitty_keyboard boolean
+---@field enable_scroll_bar boolean
+---@field enable_tab_bar boolean
+---@field enable_wayland boolean
+---@field exit_behavior any #TODO
+---@field font any #TODO
+---@field font_antialias any #TODO
+---@field font_dirs string #TODO
+---@field font_hinting any #TODO
+---@field font_locator any #TODO
+---@field font_rasterizer any #TODO
+---@field font_rules any #TODO
+---@field font_shaper any #TODO
+---@field font_size number
+---@field force_reverse_video_cursor boolean
+---@field foreground_text_hsb any #TODO
+---@field freetype_interpreter_version integer
+---@field freetype_load_flags string
+---@field freetype_load_target any #TODO
+---@field freetype_pcf_long_family_names boolean
+---@field freetype_render_target any #TODO
+---@field front_end any #TODO
+---@field harfbuzz_features string #TODO
+---@field hide_mouse_cursor_when_typing any #TODO
+---@field hide_tab_bar_if_only_one_tab boolean
+---@field hyperlink_rules string #TODO
+---@field ime_preedit_rendering any #TODO
+---@field inactive_pane_hsb { hue: number, saturation: number, brightness: number }
+---@field initial_cols integer
+---@field initial_rows integer
+---@field integrated_title_button_alignment any #TODO
+---@field integrated_title_button_color any #TODO
+---@field integrated_title_button_style any #TODO
+---@field integrated_title_buttons any #TODO
+---@field key_map_preference any #TODO
+---@field key_tables any #TODO
+---@field launch_menu any -- TODO: https://wezfurlong.org/wezterm/config/launch.html#the-launcher-menu
+---@field leader any #TODO
+---@field line_height number
+---@field log_unknown_escape_sequences any #TODO
+---@field macos_forward_to_ime_modifier_mask any #TODO
+---@field macos_window_background_blur any #TODO
+---@field max_fps integer
+---@field min_scroll_bar_height string
+---@field mouse_wheel_scrolls_tabs any #TODO
+---@field mux_env_remove any #TODO
+---@field native_macos_fullscreen_mode boolean
+---@field normalize_output_to_unicode_nfc boolean
+---@field pane_focus_follows_mouse boolean
+---@field prefer_egl boolean
+---@field quick_select_alphabet string
+---@field quick_select_patterns any #TODO
+---@field quit_when_all_windows_are_closed any #TODO
+---@field quote_dropped_files any #TODO
+---@field scroll_to_bottom_on_input boolean
+---@field scrollback_lines integer
+---@field selection_word_boundary string
+---@field serial_ports any #TODO
+---@field set_environment_variables any #TODO
+---@field set_strict_mode fun(self: WeztermConfig, strict: boolean)
+---@field show_new_tab_button_in_tab_bar boolean
+---@field show_tab_index_in_tab_bar boolean
+---@field show_tabs_in_tab_bar boolean
+---@field show_update_window boolean
+---@field skip_close_confirmation_for_processes_named any #TODO
+---@field ssh_backend any #TODO
+---@field ssh_domains any #TODO
+---@field status_update_interval integer
+---@field strikethrough_position string | number
+---@field swallow_mouse_click_on_pane_focus boolean
+---@field swallow_mouse_click_on_window_focus boolean
+---@field swap_backspace_and_delete boolean
+---@field switch_to_last_active_tab_when_closing_tab boolean
+---@field tab_and_split_indices_are_zero_based boolean
+---@field tab_bar_at_bottom boolean
+---@field tab_bar_style any #TODO
+---@field tab_max_width number
+---@field term string
+---@field text_blink_ease_in any #TODO
+---@field text_blink_ease_out any #TODO
+---@field text_blink_rapid_ease_in any #TODO
+---@field text_blink_rapid_ease_out any #TODO
+---@field text_blink_rate integer
+---@field text_blink_rate_rapid integer
+---@field tiling_desktop_environments any #TODO
+---@field tls_clients any #TODO
+---@field tls_servers any #TODO
+---@field treat_east_asian_ambiguous_width_as_wide boolean
+---@field treat_left_ctrlalt_as_altgr boolean
+---@field ulimit_nofile any #TODO
+---@field ulimit_nproc any #TODO
+---@field underline_position string | number
+---@field underline_thickness string | number
+---@field unicode_version integer
+---@field unix_domains any #TODO
+---@field unzoom_on_switch_pane boolean
+---@field use_cap_height_to_scale_fallback_fonts boolean
+---@field use_fancy_tab_bar boolean
+---@field use_ime boolean
+---@field use_resize_increments boolean
+---@field visual_bell any #TODO
+---@field warn_about_missing_glyphs boolean
+---@field webgpu_force_fallback_adapter any #TODO
+---@field webgpu_power_preference any #TODO
+---@field webgpu_preferred_adapter any #TODO
+---@field win32_acrylic_accent_color any #TODO
+---@field win32_system_backdrop any #TODO
+---@field window_background_gradient any #TODO
+---@field window_close_confirmation any #TODO
+---@field window_decorations any #TODO
+---@field window_frame any #TODO
+---@field window_padding {left: number, right: number, top: number, bottom: number}
+---@field wsl_domains any #TODO
+---@field xim_im_name string
+
+---@class WezTermColor
+---@field extract_colors_from_image any #TODO
+---@field from_hsla any #TODO
+---@field get_builtin_schemes any #TODO
+---@field get_default_colors any #TODO
+---@field gradient any #TODO
+---@field load_base16_scheme any #TODO
+---@field load_scheme any #TODO
+---@field load_terminal_sexy_scheme any #TODO
+---@field parse fun(color: string): WezTermColorObj? Parses the passed color and returns a Color object. Color objects evaluate as strings but have a number of methods that allow transforming and comparing colors.
+---@field save_scheme any #TODO
+
+---@class WezTermGui
+---@field default_key_tables any #TODO
+---@field default_keys any #TODO
+---@field enumerate_gpus any #TODO
+---@field get_appearance any #TODO
+---@field gui_window_for_mux_window any #TODO
+---@field gui_windows any #TODO
+---@field screens any #TODO
+
+---@class WezTermMux
+---@field all_domains any #TODO
+---@field all_windows any #TODO
+---@field get_active_workspace any #TODO
+---@field get_domain any #TODO
+---@field get_pane any #TODO
+---@field get_tab any #TODO
+---@field get_window any #TODO
+---@field get_workspace_names any #TODO
+---@field rename_workspace any #TODO
+---@field set_active_workspace any #TODO
+---@field set_default_domain any #TODO
+---@field spawn_window any #TODO
+
+---@class BatteryInfo
+---@field state_of_charge number The battery level expressed as a number between 0.0 (empty) and 1.0 (full)
+---@field vendor string Battery manufacturer name, or "unknown" if not known.
+---@field model string The battery model string, or "unknown" if not known.
+---@field serial string The battery serial number, or "unknown" if not known.
+---@field time_to_full number? If charging, how long until the battery is full (in seconds). May be nil.
+---@field time_to_empty number? If discharing, how long until the battery is empty (in seconds). May be nil.
+---@field state "Charging" | "Discharging" | "Empty" | "Full" | "Unknown"
+
+---@class LocalProcessInfo
+---@field pid number The process id
+---@field ppid number The parent process id
+---@field name string A short name for the process. Due to platform limitations, this may be inaccurate and truncated; you probably should prefer to look at the executable or argv fields instead of this one
+---@field status "Idle" | "Run" | "Sleep" | "Stop" | "Zombie" | "Tracing" | "Dead" | "Wakekill" | "Waking" | "Parked" | "LockBlocked" | "Unknown" A string holding the status of the process.
+---@field argv string[] a table holding the argument array for the process.
+---@field executable string? the full path to the executable image for the process (may be empty)
+---@field cwd string? the current working directory for the process (may be empty)
+---@field children LocalProcessInfo a table keyed by child process id and whose values are themselves LocalProcessInfo objects that describe the child processes
+
+---@class WezTermProcInfo
+---@field current_working_dir_for_pid string? Returns the current working directory for the specified process id. This function may return nil if it was unable to return the info.
+---@field executable_path_for_pid string? Returns the path to the executable image for the specified process id. This function may return nil if it was unable to return the info.
+---@field get_info_for_pid fun(pid: number): LocalProcessInfo Returns a LocalProcessInfo object for the specified process id.
+---@field pid fun(): number Returns the process id for the current process.
+
+---@class WezTermTimeObj
+---@field format fun(self: WezTermTimeObj, format: string): string Formats the time object as a string, using the local date/time representation of the time.
+---@field format_utc fun(self: WezTermTimeObj, format: string): string Formats the time object as a string, using the UTC date/time representation of the time.
+---@field sun_times fun(self: WezTermTimeObj, lat: number, lon: number): { rise: WezTermTimeObj, set: WezTermTimeObj, progression: number, up: boolean } For the date component of the time object, compute the times of the sun rise and sun set for the given latitude and longitude.
+
+---@class WezTermTime
+---@field call_after fun(interval: number, function: function): nil Arranges to call your callback function after the specified number of seconds have elapsed.
+---@field now fun(): WezTermTimeObj Returns a WezTermTimeObj object representing the time at which wezterm.time.now() was called.
+---@field parse fun(string): WezTermTimeObj Parses a string that is formatted according to the supplied format string.
+---@field parse_rfc3339 fun(string): WezTermTimeObj Parses a string that is formatted according to RFC 3339 and returns a Time object representing that time.
+
+---@class WezTermColorObj
+---@field adjust_hue_fixed fun(self: WezTermColorObj, degrees: number): WezTermColorObj Adjust the hue angle by the specified number of degrees.
+---@field adjust_hue_fixed_ryb fun(self: WezTermColorObj, degrees: number): WezTermColorObj Adjust the hue angle by the specified number of degrees.
+---@field complement fun(self: WezTermColorObj): WezTermColorObj Returns the complement of the color. The complement is computed by converting to HSL, rotating by 180 degrees and converting back to RGBA.
+---@field complement_ryb fun(self: WezTermColorObj): WezTermColorObj Returns the complement of the color using the RYB color model, which more closely matches how artists think of mixing colors.
+---@field contrast_ratio fun(self: WezTermColorObj, other: WezTermColorObj): number Computes the contrast ratio between the two colors.
+---@field darken fun(self: WezTermColorObj, amount: number): WezTermColorObj Scales the color towards the minimum lightness by the provided factor, which should be in the range 0.0 through 1.0.
+---@field darken_fixed fun(self: WezTermColorObj, amount: number): WezTermColorObj Decrease the lightness by amount, a value ranging from 0.0 to 1.0.
+---@field delta_e fun(self: WezTermColorObj, other: WezTermColorObj): number Computes the CIEDE2000 DeltaE value representing the difference between the two colors.
+---@field desaturate fun(self: WezTermColorObj, amount: number): WezTermColorObj Scales the color towards the minimum saturation by the provided factor, which should be in the range 0.0 through 1.0.
+---@field desaturate_fixed fun(self: WezTermColorObj, amount: number): WezTermColorObj Decrease the saturation by amount, a value ranging from 0.0 to 1.0.
+---@field hsla fun(self: WezTermColorObj): {h: number, s: number, l: number, a: number} Converts the color to the HSL colorspace and returns those values + alpha.
+---@field laba fun(self: WezTermColorObj): {l: number, a: number, b: number, a: number} Converts the color to the LAB colorspace and returns those values + alpha.
+---@field lighten fun(self: WezTermColorObj, amount: number): WezTermColorObj Scales the color towards the maximum lightness by the provided factor, which should be in the range 0.0 through 1.0.
+---@field lighten_fixed fun(self: WezTermColorObj, amount: number): WezTermColorObj Increase the lightness by amount, a value ranging from 0.0 to 1.0.
+---@field linear_rgba fun(self: WezTermColorObj): {r: number, g: number, b: number, a: number} Returns a tuple of the colors converted to linear RGBA and expressed as floating point numbers in the range 0.0-1.0.
+---@field saturate fun(self: WezTermColorObj, amount: number): WezTermColorObj Scales the color towards the maximum saturation by the provided factor, which should be in the range 0.0 through 1.0.
+---@field saturate_fixed fun(self: WezTermColorObj, amount: number): WezTermColorObj Increase the saturation by amount, a value ranging from 0.0 to 1.0.
+---@field square fun(self: WezTermColorObj): {a: WezTermColorObj, b: WezTermColorObj, c: WezTermColorObj} Returns the other three colors that form a square. The other colors are 90 degrees apart on the HSL color wheel.
+---@field srgb_u8 fun(self: WezTermColorObj): {r: number, g: number, b: number, a: number} Returns a tuple of the internal SRGBA colors expressed as unsigned 8-bit integers in the range 0-255.
+---@field triad fun(self: WezTermColorObj): {a: WezTermColorObj, b: WezTermColorObj} Returns the other two colors that form a triad. The other colors are at +/- 120 degrees in the HSL color wheel.
+
+---@class KeyAssignment
+---@field ActivateCommandPalette any
+---@field ActivateCopyMode any
+---@field ActivateKeyTable any
+---@field ActivateLastTab any
+---@field ActivatePaneByIndex any
+---@field ActivatePaneDirection any
+---@field ActivateTab any
+---@field ActivateTabRelative any
+---@field ActivateTabRelativeNoWrap any
+---@field ActivateWindow any
+---@field ActivateWindowRelative any
+---@field ActivateWindowRelativeNoWrap any
+---@field AdjustPaneSize any
+---@field AttachDomain any
+---@field CharSelect any
+---@field ClearKeyTableStack any
+---@field ClearScrollback any
+---@field ClearSelection any
+---@field CloseCurrentPane any
+---@field CloseCurrentTab any
+---@field CompleteSelection any
+---@field CompleteSelectionOrOpenLinkAtMouseCursor any
+---@field Copy any @deprecated
+---@field CopyTo any
+---@field DecreaseFontSize any
+---@field DetachDomain any
+---@field DisableDefaultAssignment any
+---@field EmitEvent any
+---@field ExtendSelectionToMouseCursor any
+---@field Hide any
+---@field HideApplication any
+---@field IncreaseFontSize any
+---@field InputSelector any
+---@field MoveTab any
+---@field MoveTabRelative any
+---@field Multiple any
+---@field Nop any
+---@field OpenLinkAtMouseCursor any
+---@field PaneSelect any
+---@field Paste any @deprecated
+---@field PasteFrom any
+---@field PastePrimarySelection any
+---@field PopKeyTable any
+---@field PromptInputLine any
+---@field QuickSelect any
+---@field QuickSelectArgs any
+---@field QuitApplication any
+---@field ReloadConfiguration any
+---@field ResetFontAndWindowSize any
+---@field ResetFontSize any
+---@field ResetTerminal any
+---@field RotatePanes any
+---@field ScrollByCurrentEventWheelDelta any
+---@field ScrollByLine any
+---@field ScrollByPage any
+---@field ScrollToBottom any
+---@field ScrollToPrompt any
+---@field ScrollToTop any
+---@field Search any
+---@field SelectTextAtMouseCursor any
+---@field SendKey any
+---@field SendString any
+---@field SetPaneZoomState any
+---@field Show any
+---@field ShowDebugOverlay any
+---@field ShowLauncher any
+---@field ShowLauncherArgs any
+---@field ShowTabNavigator any
+---@field SpawnCommandInNewTab any
+---@field SpawnCommandInNewWindow any
+---@field SpawnTab any
+---@field SpawnWindow any
+---@field SplitHorizontal any
+---@field SplitPane any
+---@field SplitVertical any
+---@field StartWindowDrag any
+---@field SwitchToWorkspace any
+---@field SwitchWorkspaceRelative any
+---@field ToggleFullScreen any
+---@field TogglePaneZoomState any
