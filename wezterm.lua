@@ -50,7 +50,7 @@
 ---@field log_info fun(msg: any, ...): nil Logs the provided message string through wezterm's logging layer at 'INFO' level. If you started wezterm from a terminal that text will print to the stdout of that terminal. If running as a daemon for the multiplexer server then it will be logged to the daemon output path.
 ---@field log_warn fun(msg: any, ...): nil Logs the provided message string through wezterm's logging layer at 'WARN' level. If you started wezterm from a terminal that text will print to the stdout of that terminal. If running as a daemon for the multiplexer server then it will be logged to the daemon output path.
 ---@field nerdfonts WezTermNF
----@field on fun(event: string, callback: fun(window: any, pane: any))
+---@field on fun(event: string, callback: fun(...): any) TODO: this should be typed for each event, such as "format-tab-title", etc.
 ---@field open_with fun(path_or_url: string, application: string?) This function opens the specified path_or_url with either the specified application or uses the default application if application was not passed in.
 ---@field pad_left fun(string: string, min_width: integer): string Returns a copy of string that is at least min_width columns (as measured by wezterm.column_width)
 ---@field pad_right fun(string: string, min_width: integer): string Returns a copy of string that is at least min_width columns (as measured by wezterm.column_width).
@@ -69,6 +69,7 @@
 ---@field strftime fun(format: string): string Formats the current local date/time into a string using the Rust chrono strftime syntax.
 ---@field strftime_utc fun(format: string): string Formats the current UTC date/time into a string using the Rust chrono strftime syntax.
 ---@field target_triple string This constant is set to the Rust target triple for the platform on which wezterm was built. This can be useful when you wish to conditionally adjust your configuration based on the platform.
+---@field time Time
 ---@field truncate_left fun(string: string, max_width: number): string Returns a copy of string that is no longer than max_width columns (as measured by wezterm.column_width). Truncation occurs by reemoving excess characters from the left end of the string.
 ---@field truncate_right fun(string: string, max_width: number): string Returns a copy of string that is no longer than max_width columns (as measured by wezterm.column_width). Truncation occurs by reemoving excess characters from the right end of the string.
 ---@field utf16_to_utf8 fun(string: string): string Overly specific and exists primarily to workaround this wsl.exe issue. It takes as input a string and attempts to convert it from utf16 to utf8.
@@ -415,7 +416,7 @@
 ---@field ActivateWindow fun(index: number) Activates the nth GUI window, zero-based.
 ---@field ActivateWindowRelative fun(index: number) Activates a GUI window relative to the current window. ActivateWindowRelative(1) activates the next window, while ActivateWindowRelative(-1) activates the previous window.
 ---@field ActivateWindowRelativeNoWrap fun(index: number) Activates a GUI window relative to the current window. ActivateWindowRelativeNoWrap(1) activates the next window, while ActivateWindowRelativeNoWrap(-1) activates the previous window. This action will NOT wrap around; if the current window is the first/last, then this action will not change the current window.
----@field AdjustPaneSize fun(direction: LRUD, change: number) Manipulates the size of the active pane, allowing the size to be adjusted by an integer amount in a specific direction.
+---@field AdjustPaneSize fun(args: {direction: LRUD, change: number}) Manipulates the size of the active pane, allowing the size to be adjusted by an integer amount in a specific direction.
 ---@field AttachDomain fun(domain: string) Attempts to attach the named multiplexing domain. The name can be any of the names used in you ssh_domains, unix_domains or tls_clients configurations.
 ---@field CharSelect fun(args: { copy_on_select: boolean?, copy_to: CopyToTarget?, group: CharSelectGroups? }) Activates Character Selection Mode, which is a pop-over modal that allows you to browse characters by category as well as fuzzy search by name or hex unicode codepoint value.
 ---@field ClearKeyTableStack fun() Clears the entire key table stack. Note that this is triggered implicitly when the configuration is reloaded.
@@ -454,14 +455,14 @@
 ---@field ResetFontAndWindowSize fun() Reset both the font size and the terminal dimensions for the current window to the values specified by your font, initial_rows, and initial_cols configuration.
 ---@field ResetFontSize fun() Reset the font size for the current window to the value in your configuration.
 ---@field ResetTerminal fun() Sends the RIS "Reset to Initial State" escape sequence (ESC-c) to the output side of the current pane, causing the terminal emulator to reset its state. This will reset tab stops, margins, modes, graphic rendition, palette, activate the primary screen, erase the display and move the cursor to the home position.
----@field RotatePanes fun() Rotates the sequence of panes within the active tab, preserving the sizes based on the tab positions. Panes within a tab have an ordering that follows the creation order of the splits.
+---@field RotatePanes fun(direction: "Clockwise" | "CounterClockwise") Rotates the sequence of panes within the active tab, preserving the sizes based on the tab positions. Panes within a tab have an ordering that follows the creation order of the splits.
 ---@field ScrollByCurrentEventWheelDelta fun() Adjusts the scroll position by the number of lines in the vertical mouse wheel delta field of the current mouse event, provided that it is a vertical mouse wheel event.
 ---@field ScrollByLine fun(lines: number) Adjusts the scroll position by the number of lines specified by the argument. Negative values scroll upwards, while positive values scroll downwards.
 ---@field ScrollByPage fun(pages: number) Adjusts the scroll position by the number of pages specified by the argument. Negative values scroll upwards, while positive values scroll downwards.You may now use floating point values to scroll by partial pages.
 ---@field ScrollToBottom fun() This action scrolls the viewport to the bottom of the scrollback.
 ---@field ScrollToPrompt fun(move: number) This action operates on Semantic Zones defined by applications that use OSC 133 Semantic Prompt Escapes and requires configuring your shell to emit those sequences. Takes an argument that specifies the number of zones to move and the direction to move in; -1 means to move to the previous zone while 1 means to move to the next zone.
 ---@field ScrollToTop fun() This action scrolls the viewport to the top of the scrollback.
----@field Search fun(args: { Regex: string?, CaseSensitiveString: string?, CaseInSensitiveString: string? }) This action will trigger the search overlay for the current tab. It accepts a typed pattern string as its parameter, allowing for Regex, CaseSensitiveString and CaseInSensitiveString as pattern matching types.
+---@field Search fun(args: { Regex: string?, CaseSensitiveString: string?, CaseInSensitiveString: string? } | "CurrentSelectionOrEmptyString") This action will trigger the search overlay for the current tab. It accepts a typed pattern string as its parameter, allowing for Regex, CaseSensitiveString and CaseInSensitiveString as pattern matching types.
 ---@field SelectTextAtMouseCursor fun(scope: CellWordLine | "SemanticZone" | "Block") Initiates selection of text at the current mouse cursor position.
 ---@field SendKey fun(args: { mods: string?, key: string }) Send the specified key press to the current pane. This is useful to rebind the effect of a key combination. Note that this rebinding effect only applies to the input that is about to be sent to the pane; it doesn't get re-evaluated against the key assignments you've configured in wezterm again.
 ---@field SendString fun(string: string) Sends the string specified argument to the terminal in the current tab, as though that text were literally typed into the terminal.
@@ -485,7 +486,7 @@
 ---@field TogglePaneZoomState fun() Toggles the zoom state of the current pane. A Zoomed pane takes up all available space in the tab, hiding all other panes while it is zoomed. Switching its zoom state off will restore the prior split arrangement.
 
 ---@class QuickSelectArgsArgs
----@field patterns string? If present, completely overrides the normal set of patterns and uses only the patterns specified
+---@field patterns string[]? If present, completely overrides the normal set of patterns and uses only the patterns specified
 ---@field alphabet string? if present, this alphabet is used instead of quick_select_alphabet
 ---@field action KeyAssignment? if present, this key assignment action is performed as if by window:perform_action when an item is selected. The normal clipboard action is NOT performed in this case.
 ---@field label string? if present, replaces the string "copy" that is shown at the bottom of the overlay; you can use this to indicate which action will happen if you are using action.
