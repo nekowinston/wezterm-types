@@ -3,7 +3,7 @@
 ---@field require fun(url: string): any
 
 ---@alias FontStretch "UltraCondensed" | "ExtraCondensed" | "Condensed" | "SemiCondensed" | "Normal" | "SemiExpanded" | "Expanded" | "ExtraExpanded" | "UltraExpanded"
----@alias FontWeight "Thin" | "ExtraLight" | "Light" | "DemiLight" | "Book" | "Regular" | "Medium" | "DemiBold" | "Bold" | "ExtraBold" | "Black" | "ExtraBlack".
+---@alias FontWeight "Thin" | "ExtraLight" | "Light" | "DemiLight" | "Book" | "Regular" | "Medium" | "DemiBold" | "Bold" | "ExtraBold" | "Black" | "ExtraBlack"
 ---@alias FreeTypeRenderTarget "Normal" | "HorizontalLcd"
 ---@alias FreeTypeLoadTarget "Normal" | "Light" | "Mono" | "HorizontalLcd"
 ---@alias FontAttributes { family: string, harfbuzz_features: string[], stretch: FontStretch, weight: FontWeight, freetype_load_flags: string, freetype_load_target: FreeTypeLoadTarget, freetype_render_target: FreeTypeRenderTarget, assume_emoji_presentation: boolean }
@@ -59,7 +59,7 @@
 ---@field plugin WeztermPlugin
 ---@field read_dir fun(path: string): string Returns an array containing the absolute file names of the directory specified. Due to limitations in the lua bindings, all of the paths must be able to be represented as UTF-8 or this function will generate an error.
 ---@field reload_configuration fun(): nil Immediately causes the configuration to be reloaded and re-applied.
----@field run_child_process fun(args: string[]): {success: boolean, stdout: string, stderr: string} Will attempt to spawn that command and will return a tuple consisting of the boolean success of the invocation, the stdout data and the stderr data.
+---@field run_child_process fun(args: string[]): { success: boolean, stdout: string, stderr: string } Will attempt to spawn that command and will return a tuple consisting of the boolean success of the invocation, the stdout data and the stderr data.
 ---@field running_under_wsl fun(): boolean Returns a boolean indicating whether we believe that we are running in a Windows Services for Linux (WSL) container.
 ---@field shell_join_args fun(args: string[]): string Joins together its array arguments by applying posix style shell quoting on each argument and then adding a space.
 ---@field shell_quote_arg fun(string: string): string Quotes its single argument using posix shell quoting rules.
@@ -76,7 +76,7 @@
 
 ---@class Background
 ---@field source string Defines the source of the layer texture data. See below for source definitions
----@field attachment "Fixed" | "Scroll" | {Parallax: number} Controls whether the layer is fixed to the viewport or moves as it scrolls.
+---@field attachment "Fixed" | "Scroll" | { Parallax: number } Controls whether the layer is fixed to the viewport or moves as it scrolls.
 ---@field repeat_x "Repeat" | "Mirror" | "NoRepeat" Controls whether the image is repeated in the x-direction.
 ---@field repeat_x_size number | string Normally, when repeating, the image is tiled based on its width such that each copy of the image is immediately adjacent to the preceding instance. You may set repeat_x_size to a different value to increase or decrease the space between the repeated instances.
 ---@field repeat_y any Like `repeat_x` but affects the y-direction.
@@ -86,13 +86,13 @@
 ---@field horizontal_align "Left" | "Center" | "Right" Controls the initial horizontal position of the layer, relative to the viewport:
 ---@field horizontal_offset number | string like `vertical_offset` but applies to the x-direction.
 ---@field opacity number A number in the range 0 through 1.0 inclusive that is multiplied with the alpha channel of the source to adjust the opacity of the layer. The default is 1.0 to use the source alpha channel as-is. Using a smaller value makes the layer less opaque/more transparent.
----@field hsb {hue: number, saturation: number, brightness: number} A hue, saturation, brightness tranformation that can be used to adjust those attributes of the layer. See `foreground_text_hsb` for more information about this kind of transform.
+---@field hsb { hue: number, saturation: number, brightness: number } A hue, saturation, brightness tranformation that can be used to adjust those attributes of the layer. See `foreground_text_hsb` for more information about this kind of transform.
 ---@field height "Cover" | "Contain" | number | string Controls the height of the image. The following values are accepted:
 ---@field width "Cover" | "Contain" | number | string controls the width of the image. Same details as height but applies to the x-direction.
 
----@alias EasingFunction "Linear" | "Ease" | "EaseIn" | "EaseInOut" | "EaseOut" | {CubicBezier: number[]} | "Constant"
+---@alias EasingFunction "Linear" | "Ease" | "EaseIn" | "EaseInOut" | "EaseOut" | { CubicBezier: number[] } | "Constant"
 
----@alias Color {AnsiColor: string?, Color: string?}
+---@alias Color { AnsiColor: string?, Color: string? }
 ---@class ColorSchemeTabBarTab
 ---@field bg_color string The color of the background area for the tab
 ---@field fg_color string The color of the text for the tab
@@ -120,7 +120,7 @@
 ---@field split string The color of the split lines between panes
 ---@field ansi string[] The color palette for the first 8 ANSI colors
 ---@field brights string[] The color palette for the second 8 ANSI colors
----@field indexed table<number, string> Arbitrary colors of the palette in the range from 16 to 255
+---@field indexed { [number]: string } Arbitrary colors of the palette in the range from 16 to 255
 ---@field composer_cursor string The color of the cursor when the IME is active
 ---@field copy_mode_active_highlight_bg Color The background color of the active text in copy mode
 ---@field copy_mode_active_highlight_fg Color The foreground color of the active text in copy mode
@@ -159,7 +159,7 @@
 ---@field cursor_blink_rate integer Specifies how often a blinking cursor transitions between visible and invisible, expressed in milliseconds. Setting this to 0 disables blinking. Note that this value is approximate due to the way that the system event loop schedulers manage timers; non-zero values will be at least the interval specified with some degree of slop.
 ---@field cursor_thickness number | string If specified, overrides the base thickness of the lines used to render the textual cursor glyph. The default is to use the `underline_thickness`.
 ---@field custom_block_glyphs boolean When set to true (the default), WezTerm will compute its own idea of what the glyphs in the following unicode ranges should be, instead of using glyphs resolved from a font. Ideally this option wouldn't exist, but it is present to work around a hinting issue in freetype.
----@field daemon_options {stdout: string, stderr: string, pid_file: string} Allows configuring the multiplexer (mux) server and how it places itself into the background to run as a daemon process. You should not normally need to configure this setting; the defaults should be sufficient in most cases.
+---@field daemon_options { stdout: string, stderr: string, pid_file: string } Allows configuring the multiplexer (mux) server and how it places itself into the background to run as a daemon process. You should not normally need to configure this setting; the defaults should be sufficient in most cases.
 ---@field debug_key_events boolean When set to true, each key event will be logged by the GUI layer as an INFO level log message on the stderr stream from wezterm. You will typically need to launch wezterm directly from another terminal to see this logging. This can be helpful in figuring out how keys are being decoded on your system, or for discovering the system-dependent "raw" key code values.
 ---@field default_cursor_style "SteadyBlock" | "BlinkingBlock" | "SteadyUnderline" | "BlinkingUnderline" | "SteadyBar" | "BlinkingBar"
 ---@field default_cwd string Sets the default current working directory used by the initial window. The value is a string specifying the absolute path that should be used for the home directory. Using strings like ~ or ~username that are typically expanded by the shell is not supported. You can use wezterm.home_dir to explicitly refer to your home directory.
@@ -180,22 +180,25 @@
 ---@field enable_wayland boolean If false, do not try to use a Wayland protocol connection when starting the gui frontend, and instead use X11. This option is only considered on X11/Wayland systems and has no effect on macOS or Windows. The default is true. In versions prior to 20220624-141144-bd1b7c5d it was disabled by default.
 ---@field exit_behavior "Close" | "Hold" | "CloseOnCleanExit" Controls the behavior when the shell program spawned by the terminal exits.
 ---@field font Font Configures the font to use by default. The font setting can specify a set of fallbacks and other options, and is described in more detail in the Fonts section. You will typically use `wezterm.font` or `wezterm.font_with_fallback` to specify the font.
----@field font_antialias "None" | "Greyscale" | "Subpixel" @deprecated Use freetype_load_target instead
+---@field font_antialias "None" | "Greyscale" | "Subpixel" **DEPRECATED** Use freetype_load_target instead
 ---@field font_dirs string[] By default, wezterm will use an appropriate system-specific method for locating the fonts that you specify using the options below. In addition, if you configure the `font_dirs` option, wezterm will load fonts from that set of directories.
----@field font_hinting "None" | "Vertical" | "VerticalSubpixel" | "Full" @deprecated Use `freetype_load_target` instead
+---@field font_hinting "None" | "Vertical" | "VerticalSubpixel" | "Full" **DEPRECATED** Use `freetype_load_target` instead
 ---@field font_locator "ConfigDirsOnly" | nil specifies the method by which system fonts are located and loaded. You may specify ConfigDirsOnly to disable loading system fonts and use only the fonts found in the directories that you specify in your font_dirs configuration option. Otherwise, it is recommended to omit this setting.
 ---@field font_rasterizer "FreeType" Specifies the method by which fonts are rendered on screen. The only available implementation is FreeType.
----@field font_rules {intensity: FontWeight, italic: boolean, font: Font}[] When textual output in the terminal is styled with bold, italic or other attributes, wezterm uses font_rules to decide how to render that text. By default, unstyled text will use the font specified by the font configuration, and wezterm will use that as a base, and then automatically generate appropriate font_rules that use heavier weight fonts for bold text, lighter weight fonts for dim text and italic fonts for italic text. Most users won't need to specify any explicit value for font_rules, as the defaults should be sufficient.
----@field font_shaper "Harfbuzz" @deprecated
+---@field font_rules { intensity: FontWeight, italic: boolean, font: Font }[] When textual output in the terminal is styled with bold, italic or other attributes, wezterm uses font_rules to decide how to render that text. By default, unstyled text will use the font specified by the font configuration, and wezterm will use that as a base, and then automatically generate appropriate font_rules that use heavier weight fonts for bold text, lighter weight fonts for dim text and italic fonts for italic text. Most users won't need to specify any explicit value for font_rules, as the defaults should be sufficient.
+---@field font_shaper "Harfbuzz" **DEPRECATED**
 ---@field font_size number Specifies the size of the font, measured in points. You may use fractional point sizes, such as 13.3, to fine tune the size.
----@field force_reverse_video_cursor boolean
----@field foreground_text_hsb any #TODO
+---@field force_reverse_video_cursor boolean When force_reverse_video_cursor = true, override the cursor_fg, cursor_bg, cursor_border settings from the color scheme and force the cursor to use reverse video colors based on the foreground and background colors. When force_reverse_video_cursor = false (the default), cursor_fg, cursor_bg and cursor_border color scheme settings are applied as normal.
+---@field foreground_text_hsb { hue: number, saturation: number, brightness: number } #TODO Configures a Hue, Saturation, Brightness transformation that is applied to monochrome glyphs. The transform works by converting the RGB colors to HSV values and then multiplying the HSV by the numbers specified in foreground_text_hsb.
 ---@field freetype_interpreter_version integer
 ---@field freetype_load_flags string
 ---@field freetype_load_target any #TODO
 ---@field freetype_pcf_long_family_names boolean
 ---@field freetype_render_target any #TODO
----@field front_end any #TODO
+---@field front_end
+---| "OpenGL" # use GPU accelerated rasterization.
+---| "Software" # use CPU-based rasterization.
+---| "WebGpu" # use GPU accelerated rasterization (Since: Version 20221119-145034-49b9839f)
 ---@field harfbuzz_features string #TODO
 ---@field hide_mouse_cursor_when_typing any #TODO
 ---@field hide_tab_bar_if_only_one_tab boolean
@@ -251,7 +254,7 @@
 ---@field tab_bar_at_bottom boolean
 ---@field tab_bar_style any #TODO
 ---@field tab_max_width number
----@field term string
+---@field term string What to set the TERM environment variable to. The default is xterm-256color, which should provide a good level of feature support without requiring the installation of additional terminfo data.
 ---@field text_blink_ease_in any #TODO
 ---@field text_blink_ease_out any #TODO
 ---@field text_blink_rapid_ease_in any #TODO
@@ -285,7 +288,7 @@
 ---@field window_close_confirmation any #TODO
 ---@field window_decorations any #TODO
 ---@field window_frame any #TODO
----@field window_padding {left: number, right: number, top: number, bottom: number}
+---@field window_padding { left: number, right: number, top: number, bottom: number }
 ---@field wsl_domains any #TODO
 ---@field xim_im_name string
 
@@ -371,102 +374,128 @@
 ---@field delta_e fun(self: ColorObj, other: ColorObj): number Computes the CIEDE2000 DeltaE value representing the difference between the two colors.
 ---@field desaturate fun(self: ColorObj, amount: number): ColorObj Scales the color towards the minimum saturation by the provided factor, which should be in the range 0.0 through 1.0.
 ---@field desaturate_fixed fun(self: ColorObj, amount: number): ColorObj Decrease the saturation by amount, a value ranging from 0.0 to 1.0.
----@field hsla fun(self: ColorObj): {h: number, s: number, l: number, a: number} Converts the color to the HSL colorspace and returns those values + alpha.
----@field laba fun(self: ColorObj): {l: number, a: number, b: number, a: number} Converts the color to the LAB colorspace and returns those values + alpha.
+---@field hsla fun(self: ColorObj): { h: number, s: number, l: number, a: number } Converts the color to the HSL colorspace and returns those values + alpha.
+---@field laba fun(self: ColorObj): { l: number, a: number, b: number, a: number } Converts the color to the LAB colorspace and returns those values + alpha.
 ---@field lighten fun(self: ColorObj, amount: number): ColorObj Scales the color towards the maximum lightness by the provided factor, which should be in the range 0.0 through 1.0.
 ---@field lighten_fixed fun(self: ColorObj, amount: number): ColorObj Increase the lightness by amount, a value ranging from 0.0 to 1.0.
----@field linear_rgba fun(self: ColorObj): {r: number, g: number, b: number, a: number} Returns a tuple of the colors converted to linear RGBA and expressed as floating point numbers in the range 0.0-1.0.
+---@field linear_rgba fun(self: ColorObj): { r: number, g: number, b: number, a: number } Returns a tuple of the colors converted to linear RGBA and expressed as floating point numbers in the range 0.0-1.0.
 ---@field saturate fun(self: ColorObj, amount: number): ColorObj Scales the color towards the maximum saturation by the provided factor, which should be in the range 0.0 through 1.0.
 ---@field saturate_fixed fun(self: ColorObj, amount: number): ColorObj Increase the saturation by amount, a value ranging from 0.0 to 1.0.
----@field square fun(self: ColorObj): {a: ColorObj, b: ColorObj, c: ColorObj} Returns the other three colors that form a square. The other colors are 90 degrees apart on the HSL color wheel.
----@field srgb_u8 fun(self: ColorObj): {r: number, g: number, b: number, a: number} Returns a tuple of the internal SRGBA colors expressed as unsigned 8-bit integers in the range 0-255.
----@field triad fun(self: ColorObj): {a: ColorObj, b: ColorObj} Returns the other two colors that form a triad. The other colors are at +/- 120 degrees in the HSL color wheel.
+---@field square fun(self: ColorObj): { a: ColorObj, b: ColorObj, c: ColorObj } Returns the other three colors that form a square. The other colors are 90 degrees apart on the HSL color wheel.
+---@field srgb_u8 fun(self: ColorObj): { r: number, g: number, b: number, a: number } Returns a tuple of the internal SRGBA colors expressed as unsigned 8-bit integers in the range 0-255.
+---@field triad fun(self: ColorObj): { a: ColorObj, b: ColorObj } Returns the other two colors that form a triad. The other colors are at +/- 120 degrees in the HSL color wheel.
+
+---@alias LRUD "Left" | "Right" | "Up" | "Down"
+---@alias CharSelectGroups
+---| "RecentlyUsed" Recently selected characters, ordered by frecency
+---| "SmileysAndEmotion"
+---| "PeopleAndBody"
+---| "AnimalsAndNature"
+---| "FoodAndDrink"
+---| "TravelAndPlaces"
+---| "Activities"
+---| "Objects"
+---| "Symbols"
+---| "Flags"
+---| "NerdFonts" Glyphs that are present in Nerd Fonts
+---| "UnicodeNames" All codepoints defined in unicode
+
+---@alias CellWordLine "Cell" | "Word" | "Line"
 
 ---@class KeyAssignment
----@field ActivateCommandPalette any
----@field ActivateCopyMode any
----@field ActivateKeyTable any
----@field ActivateLastTab any
----@field ActivatePaneByIndex any
----@field ActivatePaneDirection any
----@field ActivateTab any
----@field ActivateTabRelative any
----@field ActivateTabRelativeNoWrap any
----@field ActivateWindow any
----@field ActivateWindowRelative any
----@field ActivateWindowRelativeNoWrap any
----@field AdjustPaneSize any
----@field AttachDomain any
----@field CharSelect any
----@field ClearKeyTableStack any
----@field ClearScrollback any
----@field ClearSelection any
----@field CloseCurrentPane any
----@field CloseCurrentTab any
----@field CompleteSelection any
----@field CompleteSelectionOrOpenLinkAtMouseCursor any
----@field Copy any @deprecated
----@field CopyTo any
----@field DecreaseFontSize any
----@field DetachDomain any
----@field DisableDefaultAssignment any
----@field EmitEvent any
----@field ExtendSelectionToMouseCursor any
----@field Hide any
----@field HideApplication any
----@field IncreaseFontSize any
----@field InputSelector any
----@field MoveTab any
----@field MoveTabRelative any
----@field Multiple any
----@field Nop any
----@field OpenLinkAtMouseCursor any
----@field PaneSelect any
----@field Paste any @deprecated
----@field PasteFrom any
----@field PastePrimarySelection any
----@field PopKeyTable any
----@field PromptInputLine any
----@field QuickSelect any
----@field QuickSelectArgs any
----@field QuitApplication any
----@field ReloadConfiguration any
----@field ResetFontAndWindowSize any
----@field ResetFontSize any
----@field ResetTerminal any
----@field RotatePanes any
----@field ScrollByCurrentEventWheelDelta any
----@field ScrollByLine any
----@field ScrollByPage any
----@field ScrollToBottom any
----@field ScrollToPrompt any
----@field ScrollToTop any
----@field Search any
----@field SelectTextAtMouseCursor any
----@field SendKey any
----@field SendString any
----@field SetPaneZoomState any
----@field Show any
----@field ShowDebugOverlay any
----@field ShowLauncher any
----@field ShowLauncherArgs any
----@field ShowTabNavigator any
----@field SpawnCommandInNewTab any
----@field SpawnCommandInNewWindow any
----@field SpawnTab any
----@field SpawnWindow any
----@field SplitHorizontal any
----@field SplitPane any
----@field SplitVertical any
----@field StartWindowDrag any
----@field SwitchToWorkspace any
----@field SwitchWorkspaceRelative any
----@field ToggleFullScreen any
----@field TogglePaneZoomState any
+---@field ActivateCommandPalette fun() Activates the Command Palette, a modal overlay that enables discovery and activation of various commands.
+---@field ActivateCopyMode fun() Activates copy mode.
+---@field ActivateKeyTable fun(args: { name: string, timeout_milliseconds: number?, one_shot: boolean?, replace_current: boolean?, until_unknown: boolean?, prevent_fallback: boolean? }) Activates a named key table. See Key Tables for a detailed example.
+---@field ActivateLastTab fun() Activate the previously active tab. If there is none, it will do nothing.
+---@field ActivatePaneByIndex fun(index: number) ActivatePaneByIndex activates the pane with the specified index within the current tab. Invalid indices are ignored.
+---@field ActivatePaneDirection fun(direction: LRUD) Activate an adjacent pane in the specified direction. In cases where there are multiple adjacent panes in the intended direction, wezterm will choose the pane that has the largest edge intersection.
+---@field ActivateTab fun(index: number) Activate the tab specified by the argument value. eg: 0 activates the leftmost tab, while 1 activates the second tab from the left, and so on.
+---@field ActivateTabRelative fun(index: number) Activate a tab relative to the current tab. The argument value specifies an offset. eg: -1 activates the tab to the left of the current tab, while 1 activates the tab to the right.
+---@field ActivateTabRelativeNoWrap fun(index: number) Activate a tab relative to the current tab. The argument value specifies an offset. eg: -1 activates the tab to the left of the current tab, while 1 activates the tab to the right.
+---@field ActivateWindow fun(index: number) Activates the nth GUI window, zero-based.
+---@field ActivateWindowRelative fun(index: number) Activates a GUI window relative to the current window. ActivateWindowRelative(1) activates the next window, while ActivateWindowRelative(-1) activates the previous window.
+---@field ActivateWindowRelativeNoWrap fun(index: number) Activates a GUI window relative to the current window. ActivateWindowRelativeNoWrap(1) activates the next window, while ActivateWindowRelativeNoWrap(-1) activates the previous window. This action will NOT wrap around; if the current window is the first/last, then this action will not change the current window.
+---@field AdjustPaneSize fun(direction: LRUD, change: number) Manipulates the size of the active pane, allowing the size to be adjusted by an integer amount in a specific direction.
+---@field AttachDomain fun(domain: string) Attempts to attach the named multiplexing domain. The name can be any of the names used in you ssh_domains, unix_domains or tls_clients configurations.
+---@field CharSelect fun(args: { copy_on_select: boolean?, copy_to: CopyToTarget?, group: CharSelectGroups? }) Activates Character Selection Mode, which is a pop-over modal that allows you to browse characters by category as well as fuzzy search by name or hex unicode codepoint value.
+---@field ClearKeyTableStack fun() Clears the entire key table stack. Note that this is triggered implicitly when the configuration is reloaded.
+---@field ClearScrollback fun(scope: "ScrollbackOnly" | "ScrollbackAndViewport" | nil) Clears the lines that have scrolled off the top of the viewport, resetting the scrollbar thumb to the full height of the window.
+---@field ClearSelection fun() Clears the selection in the current pane.
+---@field CloseCurrentPane fun(args: { confirm: boolean? }) Closes the current pane. If that was the last pane in the tab, closes the tab. If that was the last tab, closes that window. If that was the last window, wezterm terminates.
+---@field CloseCurrentTab fun(args: { confirm: boolean? }) Closes the current tab, terminating all contained panes. If that was the last tab, closes that window. If that was the last window, wezterm terminates.
+---@field CompleteSelection fun(target: CopyToTarget) Completes an active text selection process; the selection range is marked closed and then the selected text is copied as though the Copy action was executed.
+---@field CompleteSelectionOrOpenLinkAtMouseCursor fun(target: CopyToTarget) If a selection is in progress, acts as though CompleteSelection was triggered. Otherwise acts as though OpenLinkAtMouseCursor was triggered.
+---@field Copy fun() **DEPRECATED**: Please use CopyTo instead. Copy the selection to the clipboard.
+---@field CopyTo fun(target: CopyToTarget) Copy the selection to the specified clipboard buffer.
+---@field DecreaseFontSize fun() Decreases the font size of the current window by 10%.
+---@field DetachDomain fun(args: { DomainName: string } | "CurrentPaneDomain") Attempts to detach the specified domain. Detaching a domain causes it to disconnect and remove its set of windows, tabs and panes from the local GUI. Detaching does not cause those panes to close; if or when you later attach to the domain, they'll still be there.
+---@field DisableDefaultAssignment fun() Has no special meaning of its own; this action will undo the registration of a default assignment if that key/mouse/modifier combination is one of the default assignments and cause the key press to be propagated through to the tab for processing.
+---@field EmitEvent fun(event: string) This action causes the equivalent of wezterm.emit(name, window, pane) to be called in the context of the current pane.
+---@field ExtendSelectionToMouseCursor fun(arg: CellWordLine) Extends the current text selection to the current mouse cursor position.
+---@field Hide fun() Hides (or minimizes, depending on the platform) the current window.
+---@field HideApplication fun() On macOS, hide the WezTerm application.
+---@field IncreaseFontSize fun() Increases the font size of the current window by 10%.
+---@field InputSelector fun(args: { title: string, choices: { label: string, id: string }[], action: any }) Activates an overlay to display a list of choices for the user to select from. When the user accepts a line, emits an event that allows you to act upon the input.
+---@field MoveTab fun(index: number) Move the tab so that it has the index specified by the argument. eg: 0 moves the tab to be leftmost, while 1 moves the tab so that it is second tab from the left, and so on.
+---@field MoveTabRelative fun(index: number) Move the current tab relative to its peers. The argument specifies an offset. eg: -1 moves the tab to the left of the current tab, while 1 moves the tab to the right.
+---@field Multiple fun(args: KeyAssignment[]) Performs a sequence of multiple assignments. This is useful when you want a single key press to trigger multiple actions.
+---@field Nop fun() Causes the key press to have no effect; it behaves as though those keys were not pressed.
+---@field OpenLinkAtMouseCursor fun() If the current mouse cursor position is over a cell that contains a hyperlink, this action causes that link to be opened.
+---@field PaneSelect fun(args: { alphabet: string?, mode: "Activate" | "SwapWithActive" | nil }) This action activates the pane selection modal display. In this mode, each pane will be overlayed with a one- or two-character label taken from the selection alphabet.
+---@field Paste any **DEPRECATED**: Please use PasteFrom instead. Paste the clipboard to the current pane.
+---@field PasteFrom fun(target: "Clipboard" | "PrimarySelection") Paste the specified clipboard to the current pane. This is only really meaningful on X11 and some Wayland systems that have multiple clipboards.
+---@field PastePrimarySelection fun() **DEPRECATED**: Please use PasteFrom instead. X11: Paste the Primary Selection to the current tab. On other systems, this behaves identically to Paste.
+---@field PopKeyTable fun() Pops the current key table, if any, from the activation stack. See Key Tables for a detailed example.
+---@field PromptInputLine fun(args: { description: string, action: KeyAssignment }) Activates an overlay to display a prompt and request a line of input from the user. When the user enters the line, emits an event that allows you to act upon the input.
+---@field QuickSelect fun() Activates Quick Select Mode.
+---@field QuickSelectArgs fun(args: QuickSelectArgsArgs) Activates Quick Select Mode but with the option to override the global configuration.
+---@field QuitApplication fun() Terminate the WezTerm application, killing all tabs.
+---@field ReloadConfiguration fun() Explicitly reload the configuration.
+---@field ResetFontAndWindowSize fun() Reset both the font size and the terminal dimensions for the current window to the values specified by your font, initial_rows, and initial_cols configuration.
+---@field ResetFontSize fun() Reset the font size for the current window to the value in your configuration.
+---@field ResetTerminal fun() Sends the RIS "Reset to Initial State" escape sequence (ESC-c) to the output side of the current pane, causing the terminal emulator to reset its state. This will reset tab stops, margins, modes, graphic rendition, palette, activate the primary screen, erase the display and move the cursor to the home position.
+---@field RotatePanes fun() Rotates the sequence of panes within the active tab, preserving the sizes based on the tab positions. Panes within a tab have an ordering that follows the creation order of the splits.
+---@field ScrollByCurrentEventWheelDelta fun() Adjusts the scroll position by the number of lines in the vertical mouse wheel delta field of the current mouse event, provided that it is a vertical mouse wheel event.
+---@field ScrollByLine fun(lines: number) Adjusts the scroll position by the number of lines specified by the argument. Negative values scroll upwards, while positive values scroll downwards.
+---@field ScrollByPage fun(pages: number) Adjusts the scroll position by the number of pages specified by the argument. Negative values scroll upwards, while positive values scroll downwards.You may now use floating point values to scroll by partial pages.
+---@field ScrollToBottom fun() This action scrolls the viewport to the bottom of the scrollback.
+---@field ScrollToPrompt fun(move: number) This action operates on Semantic Zones defined by applications that use OSC 133 Semantic Prompt Escapes and requires configuring your shell to emit those sequences. Takes an argument that specifies the number of zones to move and the direction to move in; -1 means to move to the previous zone while 1 means to move to the next zone.
+---@field ScrollToTop fun() This action scrolls the viewport to the top of the scrollback.
+---@field Search fun(args: { Regex: string?, CaseSensitiveString: string?, CaseInSensitiveString: string? }) This action will trigger the search overlay for the current tab. It accepts a typed pattern string as its parameter, allowing for Regex, CaseSensitiveString and CaseInSensitiveString as pattern matching types.
+---@field SelectTextAtMouseCursor fun(scope: CellWordLine | "SemanticZone" | "Block") Initiates selection of text at the current mouse cursor position.
+---@field SendKey fun(args: { mods: string?, key: string }) Send the specified key press to the current pane. This is useful to rebind the effect of a key combination. Note that this rebinding effect only applies to the input that is about to be sent to the pane; it doesn't get re-evaluated against the key assignments you've configured in wezterm again.
+---@field SendString fun(string: string) Sends the string specified argument to the terminal in the current tab, as though that text were literally typed into the terminal.
+---@field SetPaneZoomState fun(set: boolean) Sets the zoom state of the current pane. A Zoomed pane takes up all available space in the tab, hiding all other panes while it is zoomed. Switching its zoom state off will restore the prior split arrangement. Setting the zoom state to true zooms the pane if it wasn't already zoomed. Setting the zoom state to false un-zooms the pane if it was zoomed.
+---@field Show fun() Shows the current window.
+---@field ShowDebugOverlay fun() Overlays the current tab with the debug overlay, which is a combination of a debug log and a lua REPL.
+---@field ShowLauncher fun() Activate the Launcher Menu in the current tab.
+---@field ShowLauncherArgs fun(args: { flags: string, title: string? }) Activate the Launcher Menu in the current tab, scoping it to a set of items and with an optional title.
+---@field ShowTabNavigator fun() Activate the tab navigator UI in the current tab. The tab navigator displays a list of tabs and allows you to select and activate a tab from that list. TODO: https://wezfurlong.org/wezterm/config/lua/SpawnCommand.html
+---@field SpawnCommandInNewTab any TODO
+---@field SpawnCommandInNewWindow any TODO
+---@field SpawnTab any TODO
+---@field SpawnWindow fun() Create a new window containing a tab from the default tab domain.
+---@field SplitHorizontal any TODO
+---@field SplitPane fun(args: { direction: LRUD, size: any?, command: any?, top_level: boolean  }) Splits the active pane in a particular direction, spawning a new command into the newly created pane. TODO: size, command
+---@field SplitVertical any TODO
+---@field StartWindowDrag fun() Places the window in the drag-to-move state, which means that the window will move to follow your mouse pointer until the mouse button is released.
+---@field SwitchToWorkspace any TODO
+---@field SwitchWorkspaceRelative fun(offset: number) Switch to the workspace relative to the current workspace. Workspaces are ordered lexicographically based on their names. The argument value specifies an offset. eg: -1 switches to the workspace immediately prior to the current workspace, while 1 switches to the workspace immediately following the current workspace.
+---@field ToggleFullScreen fun() Toggles full screen mode for the current window.
+---@field TogglePaneZoomState fun() Toggles the zoom state of the current pane. A Zoomed pane takes up all available space in the tab, hiding all other panes while it is zoomed. Switching its zoom state off will restore the prior split arrangement.
+
+---@class QuickSelectArgsArgs
+---@field patterns string? If present, completely overrides the normal set of patterns and uses only the patterns specified
+---@field alphabet string? if present, this alphabet is used instead of quick_select_alphabet
+---@field action KeyAssignment? if present, this key assignment action is performed as if by window:perform_action when an item is selected. The normal clipboard action is NOT performed in this case.
+---@field label string? if present, replaces the string "copy" that is shown at the bottom of the overlay; you can use this to indicate which action will happen if you are using action.
+---@field scope_lines number? Specify the number of lines to search above and below the current viewport. The default is 1000 lines. The scope will be increased to the current viewport height if it is smaller than the viewport.
 
 ---@class MuxWindowObj #TODO
 ---@class PaneObj #TODO
 ---@class TabObj #TODO
+
+---@alias CopyToTarget "Clipboard" | "PrimarySelection" | "ClipboardAndPrimarySelection"
 
 ---@class WindowObj
 ---@field active_key_table fun(self: WindowObj): string Returns a string holding the top of the current key table activation stack, or nil if the stack is empty.  See [Key Tables](https://wezfurlong.org/wezterm/config/key-tables.html) for a detailed example.
@@ -474,17 +503,17 @@
 ---@field active_tab fun(self: WindowObj): TabObj A convenience accessor for returning the active tab within the window.
 ---@field active_workspace fun(self: WindowObj): string Returns the name of the active workspace. This example demonstrates using the launcher menu to select and create workspaces, and how the workspace can be shown in the right status area.
 ---@field composition_status fun(self: WindowObj): string? Returns a string holding the current dead key or IME composition text, or nil if the input layer is not in a composition state. This is the same text that is shown at the cursor position when composing.
----@field copy_to_clipboard fun(self: WindowObj, text: string, target: "Clipboard" | "PrimarySelection" | "ClipboardAndPrimarySelection" | nil): nil Puts text into the specified clipboard.
+---@field copy_to_clipboard fun(self: WindowObj, text: string, target: CopyToTarget?): nil Puts text into the specified clipboard.
 ---@field current_event fun(self: WindowObj): string Returns the current event. For now only implemented for mouse events. #TODO: type annotate the Event
 ---@field effective_config fun(self: WindowObj): WeztermConfig Returns a lua table representing the effective configuration for the Window. The table is in the same format as that used to specify the config in the wezterm.lua file, but represents the fully-populated state of the configuration, including any CLI or per-window configuration overrides.  Note: changing the config table will NOT change the effective window config; it is just a copy of that information.
 ---@field focus fun(self: WindowObj): nil Attempts to focus and activate the window.
 ---@field get_appearance fun(self: WindowObj): "Light" | "Dark" | "LightHighContrast" | "DarkHighContrast" Returns the appearance of the window environment.
 ---@field get_config_overrides fun(self: WindowObj): WeztermConfig Returns a copy of the current set of configuration overrides that is in effect for the window. See `set_config_overrides` for examples!
----@field get_dimensions fun(self: WindowObj): {pixel_width: number, pixel_height: number, dpi: number, is_full_screen: boolean} Returns a Lua table representing the dimensions for the Window.
+---@field get_dimensions fun(self: WindowObj): { pixel_width: number, pixel_height: number, dpi: number, is_full_screen: boolean } Returns a Lua table representing the dimensions for the Window.
 ---@field get_selection_escapes_for_pane fun(self: WindowObj): string Returns the text that is currently selected within the specified pane within the specified window formatted with the escape sequences necessary to reproduce the same colors and styling. This is the same text that `window:get_selection_text_for_pane()` would return, except that it includes escape sequences.
 ---@field get_selection_text_for_pane fun(self: WindowObj): string Returns the text that is currently selected within the specified pane within the specified window. This is the same text that would be copied to the clipboard if the CopyTo action were to be performed. Why isn't this simply a method of the `pane` object? The reason is that the selection is an attribute of the containing window, and a given pane can potentially be mapped into multiple windows.
 ---@field is_focused fun(self: WindowObj): boolean Returns true if the window has focus. The update-status event is fired when the focus state changes.
----@field keyboard_modifiers fun(self: WindowObj): {mods: string, leds: string} Returns two values; the keyboard modifiers and the key status leds. Both values are exposed to lua as strings with |-delimited values representing the various modifier keys and keyboard led states: Modifiers - is the same form as keyboard assignment modifiers Leds - possible flags are "CAPS_LOCK" and "NUM_LOCK". Note that macOS doesn't have a num lock concept.
+---@field keyboard_modifiers fun(self: WindowObj): { mods: string, leds: string } Returns two values; the keyboard modifiers and the key status leds. Both values are exposed to lua as strings with |-delimited values representing the various modifier keys and keyboard led states: Modifiers - is the same form as keyboard assignment modifiers Leds - possible flags are "CAPS_LOCK" and "NUM_LOCK". Note that macOS doesn't have a num lock concept.
 ---@field leader_is_active fun(self: WindowObj): boolean Returns true if the Leader Key is active in the window, or false otherwise.
 ---@field maximize fun(self: WindowObj): nil Puts the window into the maximized state. Use `window:restore()` to return to the normal/non-maximized state.
 ---@field mux_window fun(self: WindowObj): MuxWindowObj Returns the MuxWindow representation of this window.
