@@ -198,7 +198,7 @@
 ---@field custom_block_glyphs boolean When set to true (the default), WezTerm will compute its own idea of what the glyphs in the following unicode ranges should be, instead of using glyphs resolved from a font. Ideally this option wouldn't exist, but it is present to work around a hinting issue in freetype.
 ---@field daemon_options { stdout: string, stderr: string, pid_file: string } Allows configuring the multiplexer (mux) server and how it places itself into the background to run as a daemon process. You should not normally need to configure this setting; the defaults should be sufficient in most cases.
 ---@field debug_key_events boolean When set to true, each key event will be logged by the GUI layer as an INFO level log message on the stderr stream from wezterm. You will typically need to launch wezterm directly from another terminal to see this logging. This can be helpful in figuring out how keys are being decoded on your system, or for discovering the system-dependent "raw" key code values.
----@field default_cursor_style "SteadyBlock" | "BlinkingBlock" | "SteadyUnderline" | "BlinkingUnderline" | "SteadyBar" | "BlinkingBar"
+---@field default_cursor_style CursorShape Specifies the default cursor style. Various escape sequences can override the default style in different situations (eg: an editor can change it depending on the mode), but this value controls how the cursor appears when it is reset to default. The default is SteadyBlock.
 ---@field default_cwd string Sets the default current working directory used by the initial window. The value is a string specifying the absolute path that should be used for the home directory. Using strings like ~ or ~username that are typically expanded by the shell is not supported. You can use wezterm.home_dir to explicitly refer to your home directory.
 ---@field default_domain string When starting the GUI (not using the serial or connect subcommands), by default wezterm will set the built-in "local" domain as the default multiplexing domain. The "local" domain represents processes that are spawned directly on the local system.
 ---@field default_gui_startup_args string[] When launching the GUI using either wezterm or wezterm-gui (with no subcommand explicitly specified), wezterm will use the value of default_gui_startup_args to pick a default mode for running the GUI. The default for this config is {"start"} which makes wezterm with no additional subcommand arguments equivalent to wezterm start.
@@ -328,6 +328,9 @@
 ---@field window_padding { left: number, right: number, top: number, bottom: number }
 ---@field wsl_domains any #TODO
 ---@field xim_im_name string
+
+---@alias CursorShape "SteadyBlock" | "BlinkingBlock" | "SteadyUnderline" | "BlinkingUnderline" | "SteadyBar" | "BlinkingBar"
+---@alias CursorVisibility "Visible" | "Hidden"
 
 ---@class WezTermColor
 ---@field extract_colors_from_image any #TODO
@@ -566,7 +569,56 @@
 ---@field label string? if present, replaces the string "copy" that is shown at the bottom of the overlay; you can use this to indicate which action will happen if you are using action.
 ---@field scope_lines number? Specify the number of lines to search above and below the current viewport. The default is 1000 lines. The scope will be increased to the current viewport height if it is smaller than the viewport.
 
----@class PaneObj #TODO
+---@class StableCursorPosition
+---@field x number The horizontal cell index.
+---@field y number the vertical stable row index.
+---@field shape CursorShape The CursorShape enum value.
+---@field visibility CursorVisibility The CursorVisibility enum value.
+
+---@class RenderableDimensions
+---@field cols number The number of columns.
+---@field viewport_rows number The number of vertical cells in the visible portion of the window.
+---@field scrollback_rows number The total number of lines in the scrollback and viewport.
+---@field physical_top number The top of the physical non-scrollback screen expressed as a stable index.
+---@field scrollback_top number The top of the scrollback; the earliest row remembered by wezterm.
+
+---@class PaneMetadata
+---@field password_input boolean A boolean value that is populated only for local panes. It is set to true if it appears as though the local PTY is configured for password entry (local echo disabled, canonical input mode enabled).
+---@field is_tardy boolean A boolean value that is populated only for multiplexer client panes. It is set to true if wezterm is waiting for a response from the multiplexer server.
+---@field since_last_response_ms number An integer value that is populated only for multiplexer client panes. It is set to the number of elapsed milliseconds since the most recent response from the multiplexer server.
+
+---@class PaneObj
+---@field activate fun(self: PaneObj): nil Activates (focuses) the pane and its containing tab.
+---@field get_current_working_dir fun(self: PaneObj): string Returns the current working directory of the pane, if known. The current directory can be specified by an application sending OSC 7.
+---@field get_cursor_position fun(self: PaneObj): StableCursorPosition Returns a lua representation of the StableCursorPosition struct that identifies the cursor position, visibility and shape.
+---@field get_dimensions fun(self: PaneObj): RenderableDimensions Returns a lua representation of the RenderableDimensions struct that identifies the dimensions and position of the viewport as well as the scrollback for the pane.
+---@field get_domain_name fun(self: PaneObj): string Returns the name of the domain with which the pane is associated.
+---@field get_foreground_process_info fun(self: PaneObj): LocalProcessInfo Returns a LocalProcessInfo object corresponding to the current foreground process that is running in the pane.
+---@field get_foreground_process_name fun(self: PaneObj): string Returns the path to the executable image for the pane.
+---@field get_lines_as_text fun(self: PaneObj, lines: number?): string Returns the textual representation (not including color or other attributes) of the physical lines of text in the viewport as a string. A physical line is a possibly-wrapped line that composes a row in the terminal display matrix. If you'd rather operate on logical lines, see pane:get_logical_lines_as_text. If the optional nlines argument is specified then it is used to determine how many lines of text should be retrieved. The default (if nlines is not specified) is to retrieve the number of lines in the viewport (the height of the pane). The lines have trailing space removed from each line. The lines will be joined together in the returned string separated by a \n character. Trailing blank lines are stripped, which may result in fewer lines being returned than you might expect if the pane only had a couple of lines of output.
+---@field get_logical_lines_as_text fun(self: PaneObj, lines: number?): string Returns the textual representation (not including color or other attributes) of the logical lines of text in the viewport as a string. A logical line is an original input line prior to being wrapped into physical lines to composes rows in the terminal display matrix. WezTerm doesn't store logical lines, but can recompute them from metadata stored in physical lines. Excessively long logical lines are force-wrapped to constrain the cost of rewrapping on resize and selection operations. If you'd rather operate on physical lines, see pane:get_lines_as_text. If the optional nlines argument is specified then it is used to determine how many lines of text should be retrieved. The default (if nlines is not specified) is to retrieve the number of lines in the viewport (the height of the pane). The lines have trailing space removed from each line. The lines will be joined together in the returned string separated by a \n character. Trailing blank lines are stripped, which may result in fewer lines being returned than you might expect if the pane only had a couple of lines of output.
+---@field get_metadata fun(self: PaneObj): PaneMetadata? Returns metadata about a pane. The return value depends on the instance of the underlying pane. If the pane doesn't support this method, nil will be returned. Otherwise, the value is a lua table with the metadata contained in table fields.
+---@field get_semantic_zone_at fun(self: PaneObj): any TODO
+---@field get_semantic_zones fun(self: PaneObj): any TODO
+---@field get_text_from_region fun(self: PaneObj, start_x: number, start_y: number, end_x: number, end_y: number): string Returns the text from the specified region.
+---@field get_text_from_semantic_zone fun(self: PaneObj): any TODO
+---@field get_title fun(self: PaneObj): string Returns the title of the pane. This will typically be wezterm by default but can be modified by applications that send OSC 1 (Icon/Tab title changing) and/or OSC 2 (Window title changing) escape sequences. The value returned by this method is the same as that used to display the tab title if this pane were the only pane in the tab; if OSC 1 was used to set a non-empty string then that string will be returned. Otherwise the value for OSC 2 will be returned. Note that on Microsoft Windows the default behavior of the OS level PTY is to implicitly send OSC 2 sequences to the terminal as new programs attach to the console. If the title text is wezterm and the pane is a local pane, then wezterm will attempt to resolve the executable path of the foreground process that is associated with the pane and will use that instead of wezterm.
+---@field get_tty_name fun(self: PaneObj): string? Returns the tty device name, or nil if the name is unavailable.
+---@field get_user_vars fun(self: PaneObj): { [string]: string } Returns a table holding the user variables that have been assigned to this pane. User variables are set using an escape sequence defined by iterm2, but also recognized by wezterm; this example sets the foo user variable to the value bar:
+---@field has_unseen_output fun(self: PaneObj): boolean Returns true if there has been output in the pane since the last time the time the pane was focused.
+---@field inject_output fun(self: PaneObj, text: string): nil Sends text, which may include escape sequences, to the output side of the current pane. The text will be evaluated by the terminal emulator and can thus be used to inject/force the terminal to process escape sequences that adjust the current mode, as well as sending human readable output to the terminal. Note that if you move the cursor position as a result of using this method, you should expect the display to change and for text UI programs to get confused. Not all panes support this method; at the time of writing, this works for local panes but not for multiplexer panes.
+---@field is_alt_screen_active fun(self: PaneObj): boolean Returns whether the alternate screen is active for the pane. The alternate screen is a secondary screen that is activated by certain escape codes. The alternate screen has no scrollback, which makes it ideal for a "full-screen" terminal program like vim or less to do whatever they want on the screen without fear of destroying the user's scrollback. Those programs emit escape codes to return to the normal screen when they exit.
+---@field move_to_new_tab fun(self: PaneObj): { tab: MuxTabObj, window: MuxWindowObj } Creates a new tab in the window that contains pane, and moves pane into that tab. Returns the newly created MuxTab object, and the MuxWindow object that contains it.
+---@field move_to_new_window fun(self: PaneObj, workspace: string?): { tab: MuxTabObj, window: MuxWindowObj } Creates a window and moves pane into that window. The WORKSPACE parameter is optional; if specified, it will be used as the name of the workspace that should be associated with the new window. Otherwise, the current active workspace will be used. Returns the newly created MuxTab object, and the newly created MuxWindow object.
+---@field mux_pane fun(self: PaneObj): nil **DEPRECATED**
+---@field pane_id fun(self: PaneObj): number Returns the id number for the pane. The Id is used to identify the pane within the internal multiplexer and can be used when making API calls via wezterm cli to indicate the subject of manipulation.
+---@field paste fun(self: PaneObj, text: string): nil Sends the supplied text string to the input of the pane as if it were pasted from the clipboard, except that the clipboard is not involved. If the terminal attached to the pane is set to bracketed paste mode then the text will be sent as a bracketed paste. Otherwise the string will be streamed into the input in chunks of approximately 1KB each.
+---@field send_paste fun(self: PaneObj, text: string): nil Sends text to the pane as though it was pasted. If bracketed paste mode is enabled then the text will be sent as a bracketed paste. Otherwise, it will be sent as-is.
+---@field send_text fun(self: PaneObj, text: string): nil Sends text to the pane as-is.
+---@field split fun(self: PaneObj): PaneObj TODO
+---@field tab fun(self: PaneObj): MuxTabObj? the MuxTab that contains this pane. Note that this method can return nil when pane is a GUI-managed overlay pane (such as the debug overlay), because those panes are not managed by the mux layer.
+---@field window fun(self: PaneObj): MuxWindowObj Returns the MuxWindow that contains the tab that contains this pane.
+
 ---@class TabObj #TODO
 
 ---@alias CopyToTarget "Clipboard" | "PrimarySelection" | "ClipboardAndPrimarySelection"
