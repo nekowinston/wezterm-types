@@ -96,11 +96,17 @@
 ---@field utf16_to_utf8 fun(string: string): string Overly specific and exists primarily to workaround this wsl.exe issue. It takes as input a string and attempts to convert it from utf16 to utf8.
 ---@field version string This constant is set to the wezterm version string that is also reported by running wezterm -V. This can potentially be used to adjust configuration according to the installed version.
 
----@alias CallbackWindowPane fun(window: WindowObj, pane: PaneObj): nil
----@alias EventAugmentCommandPalette fun(event: "augment-command-palette", callback: CallbackWindowPane) TODO
+---@class AugmentCommandPaletteReturn
+---@field brief string The brief description for the entry
+---@field doc string? A long description that may be shown after the entry, or that may be used in future versions of wezterm to provide more information about the command.
+---@field action KeyAssignment The action to take when the item is activated. Can be any key assignment action.
+---@field icon WezTermNF? optional Nerd Fonts glyph name to use for the icon for the entry. See wezterm.nerdfonts for a list of icon names.
+
+---@alias CallbackWindowPane fun(window: WindowObj, pane: PaneObj)
+---@alias EventAugmentCommandPalette fun(event: "augment-command-palette", callback: CallbackWindowPane: AugmentCommandPaletteReturn): nil This event is emitted when the Command Palette is shown. It's purpose is to enable you to add additional entries to the list of commands shown in the palette. This hook is synchronous; calling asynchronous functions will not succeed.
 ---@alias EventBell fun(event: "augment-command-palette", callback: CallbackWindowPane) TODO
----@alias EventFormatTabTitle fun(event: "format-tab-title", callback: fun(tab: TabObj, tabs: TabObj[], panes: PaneObj[], config: WeztermConfig, hover: boolean, max_width: number): nil) TODO
----@alias EventFormatWindowTitle fun(event: "format-window-title", callback: fun(window: WindowObj, pane: PaneObj, tabs: TabObj[], panes: PaneObj[], config: WeztermConfig)) TODO
+---@alias EventFormatTabTitle fun(event: "format-tab-title", callback: fun(tab: MuxTabObj, tabs: MuxTabObj[], panes: PaneObj[], config: WeztermConfig, hover: boolean, max_width: number): nil) TODO
+---@alias EventFormatWindowTitle fun(event: "format-window-title", callback: fun(window: WindowObj, pane: PaneObj, tabs: MuxTabObj[], panes: PaneObj[], config: WeztermConfig)) TODO
 ---@alias EventNewTabButtonClick fun(event: "new-tab-button-click", callback: fun(window: WindowObj, pane: PaneObj, button: "Left" | "Middle" | "Right", default_action: KeyAssignment): nil) TODO
 ---@alias EventOpenUri fun(event: "open-uri", callback: fun(window: WindowObj, pane: PaneObj, uri: string): nil) TODO
 ---@alias EventUpdateRightStatus fun(event: "update-right-status", callback: CallbackWindowPane) TODO
@@ -619,14 +625,12 @@
 ---@field tab fun(self: PaneObj): MuxTabObj? the MuxTab that contains this pane. Note that this method can return nil when pane is a GUI-managed overlay pane (such as the debug overlay), because those panes are not managed by the mux layer.
 ---@field window fun(self: PaneObj): MuxWindowObj Returns the MuxWindow that contains the tab that contains this pane.
 
----@class TabObj #TODO
-
 ---@alias CopyToTarget "Clipboard" | "PrimarySelection" | "ClipboardAndPrimarySelection"
 
 ---@class WindowObj
 ---@field active_key_table fun(self: WindowObj): string Returns a string holding the top of the current key table activation stack, or nil if the stack is empty.  See [Key Tables](https://wezfurlong.org/wezterm/config/key-tables.html) for a detailed example.
 ---@field active_pane fun(self: WindowObj): PaneObj A convenience accessor for returning the active pane in the active tab of the GUI window. This is similar to [mux_window:active_pane()](https://wezfurlong.org/wezterm/config/lua/window/active_pane.html) but, because it operates at the GUI layer, it can return *Pane* objects for special overlay panes that are not visible to the mux layer of the API.
----@field active_tab fun(self: WindowObj): TabObj A convenience accessor for returning the active tab within the window.
+---@field active_tab fun(self: WindowObj): MuxTabObj A convenience accessor for returning the active tab within the window.
 ---@field active_workspace fun(self: WindowObj): string Returns the name of the active workspace. This example demonstrates using the launcher menu to select and create workspaces, and how the workspace can be shown in the right status area.
 ---@field composition_status fun(self: WindowObj): string? Returns a string holding the current dead key or IME composition text, or nil if the input layer is not in a composition state. This is the same text that is shown at the cursor position when composing.
 ---@field copy_to_clipboard fun(self: WindowObj, text: string, target: CopyToTarget?): nil Puts text into the specified clipboard.
