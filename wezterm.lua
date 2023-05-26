@@ -50,7 +50,7 @@
 ---@field log_info fun(msg: any, ...): nil Logs the provided message string through wezterm's logging layer at 'INFO' level. If you started wezterm from a terminal that text will print to the stdout of that terminal. If running as a daemon for the multiplexer server then it will be logged to the daemon output path.
 ---@field log_warn fun(msg: any, ...): nil Logs the provided message string through wezterm's logging layer at 'WARN' level. If you started wezterm from a terminal that text will print to the stdout of that terminal. If running as a daemon for the multiplexer server then it will be logged to the daemon output path.
 ---@field nerdfonts WezTermNF
----@field on fun(event: string, callback: fun(...): any) TODO: this should be typed for each event, such as "format-tab-title", etc.
+---@field on EventAugmentCommandPalette | EventBell | EventFormatTabTitle | EventFormatWindowTitle | EventNewTabButtonClick | EventOpenUri | EventUpdateRightStatus | EventUpdateStatus | EventUserVarChanged | EventWindowConfigReloaded | EventWindowFocusChanged | EventWindowResized | EventCustom
 ---@field open_with fun(path_or_url: string, application: string?) This function opens the specified path_or_url with either the specified application or uses the default application if application was not passed in.
 ---@field pad_left fun(string: string, min_width: integer): string Returns a copy of string that is at least min_width columns (as measured by wezterm.column_width)
 ---@field pad_right fun(string: string, min_width: integer): string Returns a copy of string that is at least min_width columns (as measured by wezterm.column_width).
@@ -74,6 +74,21 @@
 ---@field truncate_right fun(string: string, max_width: number): string Returns a copy of string that is no longer than max_width columns (as measured by wezterm.column_width). Truncation occurs by reemoving excess characters from the right end of the string.
 ---@field utf16_to_utf8 fun(string: string): string Overly specific and exists primarily to workaround this wsl.exe issue. It takes as input a string and attempts to convert it from utf16 to utf8.
 ---@field version string This constant is set to the wezterm version string that is also reported by running wezterm -V. This can potentially be used to adjust configuration according to the installed version.
+
+---@alias CallbackWindowPane fun(window: WindowObj, pane: PaneObj): nil
+---@alias EventAugmentCommandPalette fun(event: "augment-command-palette", callback: CallbackWindowPane) TODO
+---@alias EventBell fun(event: "augment-command-palette", callback: CallbackWindowPane) TODO
+---@alias EventFormatTabTitle fun(event: "format-tab-title", callback: fun(tab: TabObj, tabs: TabObj[], panes: PaneObj[], config: WeztermConfig, hover: boolean, max_width: number): nil) TODO
+---@alias EventFormatWindowTitle fun(event: "format-window-title", callback: fun(window: WindowObj, pane: PaneObj, tabs: TabObj[], panes: PaneObj[], config: WeztermConfig)) TODO
+---@alias EventNewTabButtonClick fun(event: "new-tab-button-click", callback: fun(window: WindowObj, pane: PaneObj, button: "Left" | "Middle" | "Right", default_action: KeyAssignment) TODO
+---@alias EventOpenUri fun(event: "open-uri", callback: fun(window: WindowObj, pane: PaneObj, uri: string): nil) TODO
+---@alias EventUpdateRightStatus fun(event: "update-right-status", callback: CallbackWindowPane) TODO
+---@alias EventUpdateStatus fun(event: "update-status", callback: CallbackWindowPane) TODO
+---@alias EventUserVarChanged fun(event: "user-var-changed", callback: fun(window: WindowObj, pane: PaneObj, name: string, value: string): nil) TODO
+---@alias EventWindowConfigReloaded fun(event: "window-config-reloaded", callback: CallbackWindowPane) TODO
+---@alias EventWindowFocusChanged fun(event: "window-focus-changed", callback: CallbackWindowPane) TODO
+---@alias EventWindowResized fun(event: "window-resized", callback: CallbackWindowPane) TODO
+---@alias EventCustom fun(event: string, callback: fun(...: any): nil) A custom declared function
 
 ---@class Background
 ---@field source string Defines the source of the layer texture data. See below for source definitions
