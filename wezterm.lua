@@ -56,7 +56,7 @@
 ---@field executable_dir string This constant is set to the directory containing the wezterm executable file.
 ---@field font fun(name: string, font_attributes: FontAttributes?): Font | fun(font_attributes: FontAttributes): Font https://wezfurlong.org/wezterm/config/lua/wezterm/font.html
 ---@field font_with_fallback fun(fonts: string[] | FontAttributes[]): Font https://wezfurlong.org/wezterm/config/lua/wezterm/font_with_fallback.html
----@field format fun(format: any[]): string Can be used to produce a formatted string with terminal graphic attributes such as bold, italic and colors. The resultant string is rendered into a string with wezterm compatible escape sequences embedded.
+---@field format fun(...: FormatItem[]): string Can be used to produce a formatted string with terminal graphic attributes such as bold, italic and colors. The resultant string is rendered into a string with wezterm compatible escape sequences embedded.
 ---@field get_builtin_color_schemes any #TODO
 ---@field glob fun(pattern: string, relative_to: string?): string[] This function evalutes the glob pattern and returns an array containing the absolute file names of the matching results. Due to limitations in the lua bindings, all of the paths must be able to be represented as UTF-8 or this function will generate an error.
 ---@field gui WezTermGui
@@ -96,6 +96,10 @@
 ---@field utf16_to_utf8 fun(string: string): string Overly specific and exists primarily to workaround this wsl.exe issue. It takes as input a string and attempts to convert it from utf16 to utf8.
 ---@field version string This constant is set to the wezterm version string that is also reported by running wezterm -V. This can potentially be used to adjust configuration according to the installed version.
 
+---@alias FormatItemAttribute { Underline: "None" | "Single" | "Double" | "Curly" | "Dotted" | "Dashed" } | { Intensity: "Normal" | "Bold" | "Half" } | { Italic: boolean }
+---@alias FormatItemReset "ResetAttributes" Reset all attributes to default.
+---@alias FormatItem { Attribute: FormatItemAttribute } | { Foreground: Color } | { Background: Color } | { Text: string } | FormatItemReset
+
 ---@class AugmentCommandPaletteReturn
 ---@field brief string The brief description for the entry
 ---@field doc string? A long description that may be shown after the entry, or that may be used in future versions of wezterm to provide more information about the command.
@@ -103,9 +107,9 @@
 ---@field icon WezTermNF? optional Nerd Fonts glyph name to use for the icon for the entry. See wezterm.nerdfonts for a list of icon names.
 
 ---@alias CallbackWindowPane fun(window: WindowObj, pane: PaneObj)
----@alias EventAugmentCommandPalette fun(event: "augment-command-palette", callback: CallbackWindowPane: AugmentCommandPaletteReturn): nil This event is emitted when the Command Palette is shown. It's purpose is to enable you to add additional entries to the list of commands shown in the palette. This hook is synchronous; calling asynchronous functions will not succeed.
----@alias EventBell fun(event: "augment-command-palette", callback: CallbackWindowPane) TODO
----@alias EventFormatTabTitle fun(event: "format-tab-title", callback: fun(tab: MuxTabObj, tabs: MuxTabObj[], panes: PaneObj[], config: WeztermConfig, hover: boolean, max_width: number): nil) TODO
+---@alias EventAugmentCommandPalette fun(event: "augment-command-palette", callback: fun(window: WindowObj, pane: WindowObj): AugmentCommandPaletteReturn): nil This event is emitted when the Command Palette is shown. It's purpose is to enable you to add additional entries to the list of commands shown in the palette. This hook is synchronous; calling asynchronous functions will not succeed.
+---@alias EventBell fun(event: "augment-command-palette", callback: CallbackWindowPane) The bell event is emitted when the ASCII BEL sequence is emitted to a pane in the window. Defining an event handler doesn't alter wezterm's handling of the bell; the event supplements it and allows you to take additional action over the configured behavior.
+---@alias EventFormatTabTitle fun(event: "format-tab-title", callback: fun(tab: MuxTabObj, tabs: MuxTabObj[], panes: PaneObj[], config: WeztermConfig, hover: boolean, max_width: number): string) TODO
 ---@alias EventFormatWindowTitle fun(event: "format-window-title", callback: fun(window: WindowObj, pane: PaneObj, tabs: MuxTabObj[], panes: PaneObj[], config: WeztermConfig)) TODO
 ---@alias EventNewTabButtonClick fun(event: "new-tab-button-click", callback: fun(window: WindowObj, pane: PaneObj, button: "Left" | "Middle" | "Right", default_action: KeyAssignment): nil) TODO
 ---@alias EventOpenUri fun(event: "open-uri", callback: fun(window: WindowObj, pane: PaneObj, uri: string): nil) TODO
@@ -135,7 +139,8 @@
 
 ---@alias EasingFunction "Linear" | "Ease" | "EaseIn" | "EaseInOut" | "EaseOut" | { CubicBezier: number[] } | "Constant"
 
----@alias Color { AnsiColor: string?, Color: string? }
+---@alias AnsiColor "Black" | "Maroon" | "Green" | "Olive" | "Navy" | "Purple" | "Teal" | "Silver" | "Grey" | "Red" | "Lime" | "Yellow" | "Blue" | "Fuchsia" | "Aqua" | "White"
+---@alias Color { AnsiColor: AnsiColor } | { Color: string }
 ---@class ColorSchemeTabBarTab
 ---@field bg_color string The color of the background area for the tab
 ---@field fg_color string The color of the text for the tab
@@ -143,6 +148,7 @@
 ---@field underline "None" | "Single" | "Double" Specify whether you want "None", "Single" or "Double" underline for the label shown for this tab. The default is "None"
 ---@field italic boolean Specify whether you want italic text for the label shown for this tab. The default is false
 ---@field strikethrough boolean Specify whether you want strikethrough text for the label shown for this tab. The default is false
+
 ---@class ColorSchemeTabBar
 ---@field background string The color of the strip that goes along the top of the window (does not apply when fancy tab bar is in use)
 ---@field active_tab ColorSchemeTabBarTab The active tab is the one that has focus in the window
