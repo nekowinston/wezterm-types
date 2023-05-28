@@ -30,11 +30,27 @@
 ---@alias FontAttributes { family: string, harfbuzz_features: string[], stretch: FontStretch, weight: FontWeight, freetype_load_flags: string, freetype_load_target: FreeTypeLoadTarget, freetype_render_target: FreeTypeRenderTarget, assume_emoji_presentation: boolean }
 
 ---@class HyperLinkRules
----@field regex string
----@field format string
----@field highlight number?
+---@field regex string The regular expression to match
+---@field format string Controls which parts of the regex match will be used to form the link. Must have a prefix: signaling the protocol type (e.g., https:/mailto:), which can either come from the regex match or needs to be explicitly added. The format string can use placeholders like $0, $1, $2 etc. that will be replaced with that numbered capture group. So, $0 will take the entire region of text matched by the whole regex, while $1 matches out the first capture group. In the example below, mailto:$0 is used to prefix a protocol to the text to make it into an URL.
+---@field highlight number? Specifies the range of the matched text that should be highlighted/underlined when the mouse hovers over the link. The value is a number that corresponds to a capture group in the regex. The default is 0, highlighting the entire region of text matched by the regex. 1 would be the first capture group, and so on.
 
----@alias Font any #TODO
+---@class FontObj
+---@field family string
+---@field is_fallback boolean
+---@field is_synthetic boolean
+---@field stretch FontStretch
+---@field style "Normal" | "Italic" | "Oblique"
+---@field weight FontWeight
+---@alias Fonts {fonts: FontObj[]}
+
+---@class SSHDomainObj
+---@field name string The name of this specific domain.  Must be unique amongst all types of domain in the configuration file.
+---@field remote_address string Identifies the host:port pair of the remote server. Can be a DNS name or an IP address with an optional ":port" on the end.
+---@field no_agent_auth boolean Whether agent auth should be disabled. Set to true to disable it.
+---@field username string The username to use for authenticating with the remote host.
+---@field connect_automatically boolean If true, connect to this domain automatically at startup
+---@field timeout number Specify an alternative read timeout
+---@field remote_wezterm_path string The path to the wezterm binary on the remote host. Primarily useful if it isn't installed in the $PATH that is configure for ssh.
 
 ---@class wezterm
 ---@field GLOBAL any
@@ -49,13 +65,13 @@
 ---@field config_file string This constant is set to the path to the wezterm.lua that is in use.
 ---@field color WezTermColor The `wezterm.color` module exposes functions that work with colors.
 ---@field default_hyperlink_rules fun(): HyperLinkRules[] Returns the compiled-in default values for hyperlink_rules.
----@field default_ssh_domains any #TODO
----@field default_wsl_domains any #TODO
+---@field default_ssh_domains fun(): SSHDomainObj[] Computes a list of SshDomain objects based on the set of hosts discovered in your ~/.ssh/config. Each host will have both a plain SSH and a multiplexing SSH domain generated and returned in the list of domains. The former don't require wezterm to be installed on the remote host, while the latter do require it. The intended purpose of this function is to allow you the opportunity to edit/adjust the returned information before assigning it to your config.
+---@field default_wsl_domains fun(): { name: string, distribution: string }[] Computes a list of WslDomain objects, each one representing an installed WSL distribution on your system. This list is the same as the default value for the wsl_domains configuration option, which is to make a WslDomain with the distribution field set to the name of WSL distro and the name field set to name of the distro but with "WSL:" prefixed to it.
 ---@field emit fun(event: string, ...)
----@field enumerate_ssh_hosts any #TODO
+---@field enumerate_ssh_hosts fun(ssh_config_file_name: string?): { [string] : { hostname: string, identityagent: string, identityfile: string, port: string, user: string, userknownhostsfile: string } } This function will parse your ssh configuration file(s) and extract from them the set of literal (non-pattern, non-negated) host names that are specified in Host and Match stanzas contained in those configuration files and return a mapping from the hostname to the effective ssh config options for that host.  You may optionally pass a list of ssh configuration files that should be read, in case you have a special configuration.
 ---@field executable_dir string This constant is set to the directory containing the wezterm executable file.
----@field font fun(name: string, font_attributes: FontAttributes?): Font | fun(font_attributes: FontAttributes): Font https://wezfurlong.org/wezterm/config/lua/wezterm/font.html
----@field font_with_fallback fun(fonts: string[] | FontAttributes[]): Font https://wezfurlong.org/wezterm/config/lua/wezterm/font_with_fallback.html
+---@field font fun(font_attributes: FontAttributes): Fonts | fun(name: string, font_attributes: FontAttributes?): Fonts https://wezfurlong.org/wezterm/config/lua/wezterm/font.html
+---@field font_with_fallback fun(fonts: string[] | FontAttributes[]): Fonts https://wezfurlong.org/wezterm/config/lua/wezterm/font_with_fallback.html
 ---@field format fun(...: FormatItem[]): string Can be used to produce a formatted string with terminal graphic attributes such as bold, italic and colors. The resultant string is rendered into a string with wezterm compatible escape sequences embedded.
 ---@field get_builtin_color_schemes any #TODO
 ---@field glob fun(pattern: string, relative_to: string?): string[] This function evalutes the glob pattern and returns an array containing the absolute file names of the matching results. Due to limitations in the lua bindings, all of the paths must be able to be represented as UTF-8 or this function will generate an error.
@@ -239,21 +255,21 @@
 ---@field font_size number Specifies the size of the font, measured in points. You may use fractional point sizes, such as 13.3, to fine tune the size.
 ---@field force_reverse_video_cursor boolean When force_reverse_video_cursor = true, override the cursor_fg, cursor_bg, cursor_border settings from the color scheme and force the cursor to use reverse video colors based on the foreground and background colors. When force_reverse_video_cursor = false (the default), cursor_fg, cursor_bg and cursor_border color scheme settings are applied as normal.
 ---@field foreground_text_hsb { hue: number, saturation: number, brightness: number } #TODO Configures a Hue, Saturation, Brightness transformation that is applied to monochrome glyphs. The transform works by converting the RGB colors to HSV values and then multiplying the HSV by the numbers specified in foreground_text_hsb.
----@field freetype_interpreter_version integer
----@field freetype_load_flags string
----@field freetype_load_target any #TODO
----@field freetype_pcf_long_family_names boolean
----@field freetype_render_target any #TODO
+---@field freetype_interpreter_version 35 | 38 | 30 Selects the freetype interpret version to use. Possible values are 35, 38 and 40 which have different characteristics with respective to subpixel hinting. See https://freetype.org/freetype2/docs/hinting/subpixel-hinting.html
+---@field freetype_load_flags string An advanced option to fine tune the freetype rasterizer. This is a bitfield, so you can combine one or more of these options together, separated by the | character, although not many of the available options necessarily make sense to be combined.
+---@field freetype_load_target FreeTypeLoadTarget Configures the hinting and (potentially) the rendering mode used with the freetype rasterizer.
+---@field freetype_pcf_long_family_names boolean This option provides control over the no-long-family-names FreeType PCF font driver property. The default is for this configuration to be false which sets the PCF driver to use the un-decorated font name. This corresponds to the default mode of operation of the freetype library. Some Linux distributions build the freetype library in a way that causes the PCF driver to report font names differently; instead of reporting just Terminus it will prefix the font name with the foundry (xos4 in the case of Terminus) and potentially append Wide to the name if the font has wide glyphs. The purpose of that configuration option is to disambiguate fonts, as there are a number of fonts from different foundries that all have the name Fixed, and being presented with multiple items with the same Fixed label is a very ambiguous user experience.
+---@field freetype_render_target FreeTypeRenderTarget Configures the rendering mode used with the freetype rasterizer. The default is to use the value of freetype_load_target.
 ---@field front_end
 ---| "OpenGL" # use GPU accelerated rasterization.
 ---| "Software" # use CPU-based rasterization.
 ---| "WebGpu" # use GPU accelerated rasterization (Since: Version 20221119-145034-49b9839f)
----@field harfbuzz_features string #TODO
----@field hide_mouse_cursor_when_typing any #TODO
----@field hide_tab_bar_if_only_one_tab boolean
----@field hyperlink_rules string #TODO
----@field ime_preedit_rendering any #TODO
----@field inactive_pane_hsb { hue: number, saturation: number, brightness: number }
+---@field harfbuzz_features string[] When font_shaper = "Harfbuzz", this setting affects how font shaping takes place.
+---@field hide_mouse_cursor_when_typing boolean If true, the mouse cursor will be hidden when typing, if your mouse cursor is hovering over the window. The default is true. Set to false to disable this behavior.
+---@field hide_tab_bar_if_only_one_tab boolean If set to true, when there is only a single tab, the tab bar is hidden from the display. If a second tab is created, the tab will be shown.
+---@field hyperlink_rules HyperLinkRules[] Defines rules to match text from the terminal output and generate clickable links. The value is a list of rule entries.
+---@field ime_preedit_rendering "Builtin" | "System" Control IME preedit rendering. IME preedit is an area that is used to display the string being preedited in IME. WezTerm supports the following IME preedit rendering.
+---@field inactive_pane_hsb { hue: number, saturation: number, brightness: number } TODO
 ---@field initial_cols integer
 ---@field initial_rows integer
 ---@field integrated_title_button_alignment any #TODO
@@ -284,15 +300,15 @@
 ---@field scrollback_lines integer
 ---@field selection_word_boundary string
 ---@field serial_ports any #TODO
----@field set_environment_variables any #TODO
----@field set_strict_mode fun(self: WeztermConfig, strict: boolean)
----@field show_new_tab_button_in_tab_bar boolean
----@field show_tab_index_in_tab_bar boolean
----@field show_tabs_in_tab_bar boolean
----@field show_update_window boolean
----@field skip_close_confirmation_for_processes_named any #TODO
----@field ssh_backend any #TODO
----@field ssh_domains any #TODO
+---@field set_environment_variables { [string]: string } Specifies a map of environment variables that should be set when spawning new commands in the "local" domain. This configuration is consulted at the time that a program is launched. It is not possible to update the environment of a running program on any Operating System. This is not used when working with remote domains.
+---@field set_strict_mode fun(self: WeztermConfig, strict: boolean) 
+---@field show_new_tab_button_in_tab_bar boolean When set to true (the default), the tab bar will display the new-tab button, which can be left-clicked to create a new tab, or right-clicked to display the Launcher Menu. When set to false, the new-tab button will not be drawn into the tab bar.
+---@field show_tab_index_in_tab_bar boolean When set to true (the default), tab titles show their tab number (tab index) with a prefix such as 1:. When false, no numeric prefix is shown.
+---@field show_tabs_in_tab_bar boolean When set to true (the default), the tab bar will display the tabs associated with the current window. When set to false, the tabs will not be drawn into the tab bar.
+---@field show_update_window boolean When Wezterm checks for an update and detects a new version, this option controls whether a window is shown with information about the new available version and links to download/install it.
+---@field skip_close_confirmation_for_processes_named string[] This configuration specifies a list of process names that are considered to be "stateless" and that are safe to close without prompting when closing windows, panes or tabs. When closing a pane wezterm will try to determine the processes that were spawned by the program that was started in the pane. If all of those process names match one of the names in the skip_close_confirmation_for_processes_named list then it will not prompt for closing that particular pane.
+---@field ssh_backend "Ssh2" | "LibSsh" Sets which ssh backend should be used by default for the integrated ssh client. Despite the naming, libssh2 is not a newer version of libssh, they are completely separate ssh implementations. In prior releases, "Ssh2" was the only option. "LibSsh" is the default as it has broader support for newer keys and cryptography, and has clearer feedback about authentication events that require entering a passphrase.
+---@field ssh_domains SSHDomainObj[] Configures SSH multiplexing domains.
 ---@field status_update_interval integer
 ---@field strikethrough_position string | number
 ---@field swallow_mouse_click_on_pane_focus boolean
@@ -365,58 +381,6 @@
 ---@field gui_windows any #TODO
 ---@field screens any #TODO
 
----@class MuxDomainObj
----@field attach fun(self: MuxDomainObj): nil Attempts to attach the domain. Attaching a domain will attempt to import the windows, tabs and panes from the remote system into those of the local GUI. Unlike the AttachDomain key assignment, calling domain:attach() will not implicitly spawn a new pane into the domain if the domain contains no panes. This is to provide flexibility when used in the gui-startup event. If the domain is already attached, calling this method again has no effect.
----@field detach fun(self: MuxDomainObj): nil Attempts to detach the domain. Detaching a domain causes it to disconnect and remove its set of windows, tabs and panes from the local GUI. Detaching does not cause those panes to close; if or when you later attach to the domain, they'll still be there. Not every domain supports detaching, and will log an error to the error log/debug overlay.
----@field domain_id fun(self: MuxDomainObj): number Returns the domain id.
----@field has_any_panes fun(self: MuxDomainObj): boolean Returns true if the mux has any panes that belong to this domain. This can be useful when deciding whether to spawn additional panes after attaching to a domain.
----@field is_spawnable fun(self: MuxDomainObj): boolean Returns false if this domain will never be able to spawn a new pane/tab/window, true otherwise. Serial ports are represented by a serial domain that is not spawnable.
----@field label fun(self: MuxDomainObj): string Computes a label describing the name and state of the domain. The label can change depending on the state of the domain.
----@field name fun(self: MuxDomainObj): string Returns the name of the domain. Domain names are unique; no two domains can have the same name, and the name is fixed for the lifetime of the domain.
----@field state fun(self: MuxDomainObj): "Attached" | "Detached" Returns whether the domain is attached or not.
-
----@class MuxTabObj
----@field activate fun(self: MuxTabObj): nil Activates (focuses) the tab.
----@field active_pane fun(self): PaneObj A convenience accessor for returning the active pane in the tab.
----@field get_pane_direction fun(self: MuxTabObj, direction: "Left" | "Right" | "Up" | "Down" | "Prev" | "Next"): MuxTabObj Returns pane adjacent to the active pane in tab in the direction direction.
----@field get_size fun(self: MuxTabObj): {rows: number, cols: number, pixel_width: number, pixel_height: number, dpi: number} Returns the overall size of the tab, taking into account all of the contained panes.
----@field get_title fun(self: MuxTabObj): string Returns the tab title as set by `tab:set_title()`.
----@field panes fun(self: MuxTabObj): PaneObj[] Returns an array table containing the set of Pane objects contained by this tab.
----@field panes_with_info fun(self: MuxTabObj): {index: number, is_active: boolean, is_zoomed: boolean, left: number, top: number, width: number, height: number, pixel_width: number, pixel_height: number, pane: PaneObj}[] Returns an array table containing an extended info entry for each of the panes contained by this tab.
----@field rotate_clockwise fun(self: MuxTabObj): nil Rotates the panes in the clockwise direction.
----@field rotate_counter_clockwise fun(self: MuxTabObj): nil Rotates the panes in the counter-clockwise direction.
----@field set_title fun(self: MuxTabObj, title: string): nil Sets the tab title to the provided string.
----@field set_zoomed fun(self: MuxTabObj, state: boolean): boolean Sets the zoomed state for the active pane within this tab. A zoomed pane takes up all available space in the tab, hiding all other panes while it is zoomed. Switching its zoom state off will restore the prior split arrangement. Setting the zoom state to true zooms the pane if it wasn't already zoomed. Setting the zoom state to false un-zooms the pane if it was zoomed. Returns the prior zoom state.
----@field tab_id fun(self: MuxTabObj): number Returns the tab id.
----@field window fun(self: MuxTabObj): MuxWindowObj Returns the MuxWindow object that contains this tab.
-
----@class MuxWindowObj #TODO
----@field active_pane fun(self: MuxWindowObj): PaneObj A convenience accessor for returning the active pane in the active tab of the window.
----@field active_tab fun(self: MuxWindowObj): MuxTabObj A convenience accessor for returning the active tab within the window.
----@field get_title fun(self: MuxWindowObj): string Returns the window title as set by OSC 0, OSC 2 in a contained pane, or through `window:set_title()`.
----@field get_workspace fun(self: MuxWindowObj) string Returns the name of the workspace to which the window belongs.
----@field gui_window fun(self: MuxWindowObj): WindowObj Attempts to resolve this mux window to its corresponding Gui Window. This may not succeed for a couple of reasons: If called by the multiplexer daemon, there is no gui, so this will never succeed, If the mux window is part of a workspace that is not the active workspace.
----@field set_title fun(self: MuxWindowObj): nil Sets the window title to the provided string. Note that applications may subsequently change the title via escape sequences.
----@field set_workspace fun(self: MuxWindowObj): nil Changes the name of the workspace to which the window belongs.
----@field spawn_tab fun(self: MuxWindowObj): { tab: MuxTabObj, pane: PaneObj, window: MuxWindowObj } Spawns a program into a new tab within this window, returning the MuxTab, Pane and MuxWindow objects associated with it. When no arguments are passed, the default program is spawned. TODO
----@field tabs fun(self: MuxWindowObj): MuxTabObj[] Returns an array table holding each of the MuxTab objects contained within this window.
----@field tabs_with_info fun(self: MuxWindowObj): { index: number, is_active: boolean, tab: MuxTabObj }[] Returns an array table holding an extended info entry for each of the tabs contained within this window.
----@field window_id fun(self: MuxWindowObj): number Returns the window multiplexer id.
-
----@class WezTermMux
----@field all_domains fun(): MuxDomainObj[] Returns an array table holding all of the known MuxDomain objects.
----@field all_windows fun(): MuxWindowObj[] Returns an array table holding all of the known MuxWindow objects.
----@field get_active_workspace fun(): string Returns the name of the active workspace.
----@field get_domain fun(name_or_id: string | number): string Resolves name_or_id to a domain and returns a MuxDomain object representation of it. `name_or_id` can be: A domain name string to resolve the domain by name, A domain id to resolve the domain by id, nil or omitted to return the current default domain, other lua types will generate a lua error
----@field get_pane fun(id: number): PaneObj Given a pane ID, verifies that the ID is a valid pane known to the mux and returns a Pane object that can be used to operate on the pane. This is useful for situations where you have obtained a pane id from some other source and want to use the various `Pane` methods with it.
----@field get_tab fun(id: number): MuxTabObj Given a tab ID, verifies that the ID is a valid tab known to the mux and returns a MuxTab object that can be used to operate on the tab. This is useful for situations where you have obtained a tab id from some other source and want to use the various `MuxTab` methods with it.
----@field get_window fun(id: number): MuxWindowObj Given a window ID, verifies that the ID is a valid window known to the mux and returns a MuxWindow object that can be used to operate on the window. This is useful for situations where you have obtained a window id from some other source and want to use the various `MuxWindow` methods with it.
----@field get_workspace_names fun(): string[] Returns a table containing the names of the workspaces known to the mux.
----@field rename_workspace fun(old: string, new: string): nil Renames the workspace old to new.
----@field set_active_workspace fun(name: string): nil Sets the active workspace name. If the requested name doesn't correspond to an existing workspace, then an error is raised.
----@field set_default_domain fun(domain: MuxDomainObj): nil Assign a new default domain in the mux. The domain that you assign here will override any configured `default_domain` or the implicit assignment of the default domain that may have happened as a result of starting wezterm via `wezterm connect` or `wezterm serial`.
----@field spawn_window fun(...: any): {tab: MuxTabObj, pane: PaneObj, window: MuxWindowObj} Spawns a program into a new window, returning the MuxTab, Pane and MuxWindow objects associated with it. When no arguments are passed, the default program is spawned. TODO
-
 ---@class BatteryInfo
 ---@field state_of_charge number The battery level expressed as a number between 0.0 (empty) and 1.0 (full)
 ---@field vendor string Battery manufacturer name, or "unknown" if not known.
@@ -425,16 +389,6 @@
 ---@field time_to_full number? If charging, how long until the battery is full (in seconds). May be nil.
 ---@field time_to_empty number? If discharing, how long until the battery is empty (in seconds). May be nil.
 ---@field state "Charging" | "Discharging" | "Empty" | "Full" | "Unknown"
-
----@class LocalProcessInfo
----@field pid number The process id
----@field ppid number The parent process id
----@field name string A short name for the process. Due to platform limitations, this may be inaccurate and truncated; you probably should prefer to look at the executable or argv fields instead of this one
----@field status "Idle" | "Run" | "Sleep" | "Stop" | "Zombie" | "Tracing" | "Dead" | "Wakekill" | "Waking" | "Parked" | "LockBlocked" | "Unknown" A string holding the status of the process.
----@field argv string[] a table holding the argument array for the process.
----@field executable string? the full path to the executable image for the process (may be empty)
----@field cwd string? the current working directory for the process (may be empty)
----@field children LocalProcessInfo a table keyed by child process id and whose values are themselves LocalProcessInfo objects that describe the child processes
 
 ---@class ProcInfo
 ---@field current_working_dir_for_pid string? Returns the current working directory for the specified process id. This function may return nil if it was unable to return the info.
@@ -452,28 +406,6 @@
 ---@field now fun(): TimeObj Returns a WezTermTimeObj object representing the time at which wezterm.time.now() was called.
 ---@field parse fun(string): TimeObj Parses a string that is formatted according to the supplied format string.
 ---@field parse_rfc3339 fun(string): TimeObj Parses a string that is formatted according to RFC 3339 and returns a Time object representing that time.
-
----@class ColorObj
----@field adjust_hue_fixed fun(self: ColorObj, degrees: number): ColorObj Adjust the hue angle by the specified number of degrees.
----@field adjust_hue_fixed_ryb fun(self: ColorObj, degrees: number): ColorObj Adjust the hue angle by the specified number of degrees.
----@field complement fun(self: ColorObj): ColorObj Returns the complement of the color. The complement is computed by converting to HSL, rotating by 180 degrees and converting back to RGBA.
----@field complement_ryb fun(self: ColorObj): ColorObj Returns the complement of the color using the RYB color model, which more closely matches how artists think of mixing colors.
----@field contrast_ratio fun(self: ColorObj, other: ColorObj): number Computes the contrast ratio between the two colors.
----@field darken fun(self: ColorObj, amount: number): ColorObj Scales the color towards the minimum lightness by the provided factor, which should be in the range 0.0 through 1.0.
----@field darken_fixed fun(self: ColorObj, amount: number): ColorObj Decrease the lightness by amount, a value ranging from 0.0 to 1.0.
----@field delta_e fun(self: ColorObj, other: ColorObj): number Computes the CIEDE2000 DeltaE value representing the difference between the two colors.
----@field desaturate fun(self: ColorObj, amount: number): ColorObj Scales the color towards the minimum saturation by the provided factor, which should be in the range 0.0 through 1.0.
----@field desaturate_fixed fun(self: ColorObj, amount: number): ColorObj Decrease the saturation by amount, a value ranging from 0.0 to 1.0.
----@field hsla fun(self: ColorObj): { h: number, s: number, l: number, a: number } Converts the color to the HSL colorspace and returns those values + alpha.
----@field laba fun(self: ColorObj): { l: number, a: number, b: number, a: number } Converts the color to the LAB colorspace and returns those values + alpha.
----@field lighten fun(self: ColorObj, amount: number): ColorObj Scales the color towards the maximum lightness by the provided factor, which should be in the range 0.0 through 1.0.
----@field lighten_fixed fun(self: ColorObj, amount: number): ColorObj Increase the lightness by amount, a value ranging from 0.0 to 1.0.
----@field linear_rgba fun(self: ColorObj): { r: number, g: number, b: number, a: number } Returns a tuple of the colors converted to linear RGBA and expressed as floating point numbers in the range 0.0-1.0.
----@field saturate fun(self: ColorObj, amount: number): ColorObj Scales the color towards the maximum saturation by the provided factor, which should be in the range 0.0 through 1.0.
----@field saturate_fixed fun(self: ColorObj, amount: number): ColorObj Increase the saturation by amount, a value ranging from 0.0 to 1.0.
----@field square fun(self: ColorObj): { a: ColorObj, b: ColorObj, c: ColorObj } Returns the other three colors that form a square. The other colors are 90 degrees apart on the HSL color wheel.
----@field srgb_u8 fun(self: ColorObj): { r: number, g: number, b: number, a: number } Returns a tuple of the internal SRGBA colors expressed as unsigned 8-bit integers in the range 0-255.
----@field triad fun(self: ColorObj): { a: ColorObj, b: ColorObj } Returns the other two colors that form a triad. The other colors are at +/- 120 degrees in the HSL color wheel.
 
 ---@alias LRUD "Left" | "Right" | "Up" | "Down"
 ---@alias CharSelectGroups
